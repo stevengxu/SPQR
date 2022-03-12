@@ -1,7 +1,6 @@
 source("spqr.R")
 
 # Function to generate simulated data
-
 rYgivenX <- function(n,p){
   X     <- matrix(runif(n*p),n,p)
   X[,1] <- 1
@@ -11,14 +10,12 @@ rYgivenX <- function(n,p){
   return(out)}
 
 # PDF for the simulation design
-
 dYgivenX <- function(y,X){
   m   <- 1/(1+exp(-1+5*X[2]*X[3]))
   out <- dbeta(y,10*m,10*(1-m))
   return(out)}
 
 # QF for the simulation design
-
 qYgivenX <- function(tau,X){
   m   <- 1/(1+exp(-1+5*X[2]*X[3]))
   out <- qbeta(tau,10*m,10*(1-m))
@@ -50,6 +47,7 @@ adam.params <- list(
   save.name = "spqr.model.pt" # file to save the ...
 )
 
+# using adam to obtain mle estimate
 mle.fit <- spqr.train(method="MLE", params=adam.params, X=X, y=Y, 
                       n.hidden=n.hidden, n.knots=n.knots, activation=activation)
 
@@ -62,13 +60,16 @@ mcmc.params <- list(
   thin = 5 # period for saving posterior samples
 )
 
+# using mcmc to obtain bayes estimate
 bayes.fit <- spqr.train(method="Bayes", params=mcmc.params, X=X, y=Y, 
                         n.hidden=n.hidden, n.knots=n.knots,
                         activation=activation, verbose=2)
 
+# plotting estimates
 X_test <- X[1:9,]
 yyy <- seq(0,1,length.out=101)
 
+# pdf
 pdf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "pdf")
 pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "pdf")
 
@@ -86,6 +87,7 @@ for(i in 1:9){
   }
 }
 
+# quantile function
 tau <- seq(0.05,0.95,0.05)
 qf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "qf", tau=tau)
 qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "qf", tau=tau)
@@ -128,9 +130,9 @@ pred.fun <- function(X, tau) {
 # Main effect for x2, x3, x4
 par(mfrow=c(3,3))
 for (j in c(2,3,4)) {
-  ale.mle <- spqr.ale(mle.fit, X, tau, J=j, center=F)
-  ale.bayes <- spqr.ale(bayes.fit, X, tau, J=j, center=F)
-  ale.ans <- spqr.ale(NULL, X, tau, J=j, center=F, pred.fun=pred.fun)
+  ale.mle <- spqr.ale(mle.fit, tau, J=j)
+  ale.bayes <- spqr.ale(bayes.fit, tau, J=j)
+  ale.ans <- spqr.ale(list(X=X), tau, J=j, pred.fun=pred.fun)
   
   for (i in 1:length(tau)) {
     plot(ale.ans$x.values, ale.ans$f.values[,i], type="l", xlab=paste0("x.",j), ylab="ALE", col=1)
@@ -142,14 +144,26 @@ for (j in c(2,3,4)) {
   }
 }
 
-# Interaction effect
+# Interaction effect for (x2,x3)
 par(mfrow=c(1,3))
-ale.mle <- spqr.ale(mle.fit, X, tau, J=c(2,3), center=F)
-ale.bayes <- spqr.ale(bayes.fit, X, tau, J=c(2,3), center=F)
-ale.ans <- spqr.ale(NULL, X, tau, J=c(2,3), center=F, pred.fun=pred.fun)
+ale.mle <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
+ale.bayes <- spqr.ale(bayes.fit, tau, J=c(2,3))
+ale.ans <- spqr.ale(list(X=X), tau, J=c(2,3), pred.fun=pred.fun)
 
-image(ale.ans$f.values[,,1],xlab = "x.2",ylab = "x.3",main = "True")
-image(ale.mle$f.values[,,1],xlab = "x.2",ylab = "x.3",main = "MLE")
-image(ale.bayes$f.values[,,1],xlab = "x.2",ylab = "x.3",main = "Bayes")
+image(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1],xlab = "x.2",ylab = "x.3",main = "True")
+contour(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "MLE")
+contour(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "Bayes")
+contour(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], add=TRUE, drawlabels=TRUE)
 
 par(mfrow=c(1,1))
+
+
+# Generate ALE plots directly from fitted models
+# Main effect across tau
+autoplot(bayes.fit, type="ALE", var.index=2, tau=c(0.2,0.4,0.6,0.8))
+# Interaction effect across tau
+autoplot(bayes.fit, type="ALE", var.index=c(2,3), tau=c(0.2,0.4,0.6,0.8))
+# Variable importance for across tau
+autoplot(bayes.fit, type="VI", var.index=c(2,3,4,5), tau=c(0.2,0.4,0.6,0.8))

@@ -230,7 +230,7 @@ spqr.mcmc.train <-
   }
   output <- list(sample = WB_, loglik = loglik_, waic = waic, 
                  diagnose = sampler_params, n.knots = params[["n.knots"]],
-                 activation = params[["activation"]], X = X, y = y)
+                 activation = params[["activation"]], X = t(X), y = y)
   return(output)
 }
 
