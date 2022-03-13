@@ -174,6 +174,74 @@ spqr.adam.train <-
   return(out)
 }
 
+# fully connect NN block with GP prior
+
+nn_spqr_GP <- nn_module(
+  classname = "nn_spqr",
+  initialize = function(V, dropout, batchnorm, activation, tau_prior_a, tau_prior_b) {
+    
+    activation <- eval(parse(text = paste0("nn_", activation)))
+    if (batchnorm) {
+      fc_block <- nn_BayesFC_GP_batchnorm
+    } else {
+      fc_block <- nn_BayesFC_GP
+    }
+    
+    self$layernum <- length(V)-1
+    self$fc <- nn_module_list()
+    
+    # Input Layer
+    self$fc[[1]] <- fc_block(V[1], V[2], dropout[1], tau_prior_a, 
+                             tau_prior_b, FALSE)
+    
+    if (self$layernum > 2) {
+      # Hidden Layers
+      for (i in 2:(self$layernum-1)) {
+        self$fc[[i]] <- 
+          fc_block(V[i], V[i+1], dropout[2], tau_prior_a, 
+                   tau_prior_b, TRUE)
+      }
+    }
+    
+    # Output Layer
+    self$fc[[self$layernum]] <- nn_sequential(
+      nn_BayesLinear_GP(V[self$layernum], V[self$layernum+1]),
+      nn_softmax(2)
+    )
+    
+  },
+  
+  forward = function(X) {
+    
+    logprior <- torch_tensor(0)$sum()
+    result <- self$fc[[1]](X)
+    logprior$add_(result$logprior)
+    for (i in 2:self$layernum) {
+      result <- self$fc[[i]](result$output)
+      logprior$add_(result$logprior)
+    }
+    return(list(output=result$output, logprior=logprior))
+  }
+)
+
+nn_BayesFC_GP_batchnorm <- function(in_features, out_features, probs,
+                                     tau_prior_a, tau_prior_b, scale_by_width) {
+  nn_sequential(
+    nn_BayesLinear_GP(in_features, out_features, tau_prior_a, 
+                      tau_prior_b, scale_by_width),
+    nn_batch_norm1d(out_features),
+    activation(),
+    nn_dropout(probs))
+}
+
+nn_BayesFC_GP <- function(in_features, out_features, probs,
+                          tau_prior_a, tau_prior_b, scale_by_width) {
+  nn_sequential(
+    nn_BayesLinear_GP(in_features, out_features, tau_prior_a, 
+                      tau_prior_b, scale_by_width),
+    activation(),
+    nn_dropout(probs))
+}
 
 nn_BayesLinear_GP <- nn_module(
   classname = "nn_BayesLinear",
@@ -198,8 +266,8 @@ nn_BayesLinear_GP <- nn_module(
     }
   },
   
-  forward = function(input) {
-    output <- torch_mm(self$W,input)$add(self$b)
+  forward = function(X) {
+    output <- torch_mm(self$W,X)$add(self$b)
     sig_W <- torch_divide(1,self$tau_W$sqrt())
     sig_b <- torch_divide(1,self$tau_b$sqrt())
     logprior <- torch_tensor(0)$sum()
@@ -210,6 +278,78 @@ nn_BayesLinear_GP <- nn_module(
     return(list(output=output, logprior=logprior))
   }
 )
+
+# fully connect NN block with ARD prior
+
+nn_spqr_ARD <- nn_module(
+  classname = "nn_spqr",
+  initialize = function(V, dropout, batchnorm, activation, tau_prior_a, tau_prior_b) {
+    
+    activation <- eval(parse(text = paste0("nn_", activation)))
+    fc_block <- nn_module_list()
+    if (batchnorm) {
+      fc_block[[1]] <- nn_BayesFC_ARD_batchnorm
+      fc_block[[2]] <- nn_BayesFC_GP_batchnorm
+    } else {
+      fc_block[[1]] <- nn_BayesFC_ARD
+      fc_block[[2]] <- nn_BayesFC_GP
+    }
+    
+    self$layernum <- length(V)-1
+    self$fc <- nn_module_list()
+    
+    # Input Layer
+    self$fc[[1]] <- fc_block[[1]](V[1], V[2], dropout[1], tau_prior_a, 
+                                  tau_prior_b, FALSE)
+    
+    if (self$layernum > 2) {
+      # Hidden Layers
+      for (i in 2:(self$layernum-1)) {
+        self$fc[[i]] <- 
+          fc_block[[2]](V[i], V[i+1], dropout[2], tau_prior_a, 
+                        tau_prior_b, TRUE)
+      }
+    }
+    
+    # Output Layer
+    self$fc[[self$layernum]] <- nn_sequential(
+      nn_BayesLinear_GP(V[self$layernum], V[self$layernum+1]),
+      nn_softmax(2)
+    )
+    
+  },
+  
+  forward = function(X) {
+    
+    logprior <- torch_tensor(0)$sum()
+    result <- self$fc[[1]](X)
+    logprior$add_(result$logprior)
+    for (i in 2:self$layernum) {
+      result <- self$fc[[i]](result$output)
+      logprior$add_(result$logprior)
+    }
+    return(list(output=result$output, logprior=logprior))
+  }
+)
+
+nn_BayesFC_ARD_batchnorm <- function(in_features, out_features, probs, 
+                                    tau_prior_a, tau_prior_b) {
+  nn_sequential(
+    nn_BayesLinear_ARD(in_features, out_features, tau_prior_a, 
+                       tau_prior_b),
+    nn_batch_norm1d(out_features),
+    activation(),
+    nn_dropout(probs))
+}
+
+nn_BayesFC_ARD <- function(in_features, out_features, probs, 
+                                     tau_prior_a, tau_prior_b) {
+  nn_sequential(
+    nn_BayesLinear_ARD(in_features, out_features, tau_prior_a, 
+                       tau_prior_b),
+    activation(),
+    nn_dropout(probs))
+}
 
 nn_BayesLinear_ARD <- nn_module(
   classname = "nn_BayesLinear",
@@ -229,8 +369,8 @@ nn_BayesLinear_ARD <- nn_module(
     
   },
   
-  forward = function(input) {
-    output <- torch_mm(self$W,input)$add(self$b)
+  forward = function(X) {
+    output <- torch_mm(self$W,X)$add(self$b)
     sig_W <- torch_divide(1,self$tau_W$sqrt())
     sig_b <- torch_divide(1,self$tau_b$sqrt())
     logprior <- torch_tensor(0)$sum()
@@ -243,6 +383,78 @@ nn_BayesLinear_ARD <- nn_module(
     return(list(output=output, logprior=logprior))
   }
 )
+
+# fully connect NN block with GSM prior
+
+nn_spqr_GSM <- nn_module(
+  classname = "nn_spqr",
+  initialize = function(V, dropout, batchnorm, activation, tau_prior_a, tau_prior_b, 
+                        kappa_prior_a, kappa_prior_b) {
+    
+    activation <- eval(parse(text = paste0("nn_", activation)))
+    if (batchnorm) {
+      fc_block <- nn_BayesFC_GSM_batchnorm
+    } else {
+      fc_block <- nn_BayesFC_GSM
+    }
+    
+    self$layernum <- length(V)-1
+    self$fc <- nn_module_list()
+    
+    # Input Layer
+    self$fc[[1]] <- fc_block(V[1], V[2], dropout[1], tau_prior_a, 
+                             tau_prior_b, kappa_prior_a, kappa_prior_b, FALSE)
+    
+    if (self$layernum > 2) {
+      # Hidden Layers
+      for (i in 2:(self$layernum-1)) {
+        self$fc[[i]] <- 
+          fc_block(V[i], V[i+1], dropout[2], tau_prior_a, 
+                   tau_prior_b, kappa_prior_a, kappa_prior_b, TRUE)
+      }
+    }
+    
+    # Output Layer
+    self$fc[[self$layernum]] <- nn_sequential(
+      nn_BayesLinear_GP(V[self$layernum], V[self$layernum+1]),
+      nn_softmax(2)
+    )
+    
+  },
+  
+  forward = function(X) {
+    
+    logprior <- torch_tensor(0)$sum()
+    result <- self$fc[[1]](X)
+    logprior$add_(result$logprior)
+    for (i in 2:self$layernum) {
+      result <- self$fc[[i]](result$output)
+      logprior$add_(result$logprior)
+    }
+    return(list(output=result$output, logprior=logprior))
+  }
+)
+
+nn_BayesFC_GSM_batchnorm <- function(in_features, out_features, probs, 
+                                     tau_prior_a, tau_prior_b,
+                                     kappa_prior_a, kappa_prior_b) {
+  nn_sequential(
+    nn_BayesLinear_GSM(in_features, out_features, tau_prior_a, 
+                       tau_prior_b, kappa_prior_a, kappa_prior_b),
+    nn_batch_norm1d(out_features),
+    activation(),
+    nn_dropout(probs))
+}
+
+nn_BayesFC_GSM <- function(in_features, out_features, probs, 
+                           tau_prior_a, tau_prior_b,
+                           kappa_prior_a, kappa_prior_b) {
+  nn_sequential(
+    nn_BayesLinear_GSM(in_features, out_features, tau_prior_a, 
+                       tau_prior_b, kappa_prior_a, kappa_prior_b),
+    activation(),
+    nn_dropout(probs))
+}
 
 nn_BayesLinear_GSM <- nn_module(
   classname = "nn_BayesLinear",
@@ -269,8 +481,8 @@ nn_BayesLinear_GSM <- nn_module(
     
   },
   
-  forward = function(input) {
-    output <- torch_mm(self$W,input)$add(self$b)
+  forward = function(X) {
+    output <- torch_mm(self$W,X)$add(self$b)
     sig <- torch_divide(1,self$tau$sqrt())
     lambda_W <- torch_divide(1,self$kappa_W$sqrt())
     lambda_b <- torch_divide(1,self$kappa_b$sqrt())
