@@ -19,12 +19,12 @@ source("spqr.adam.R")
 
 spqr.train <- function(params = list(), X, y, seed = NULL, verbose = TRUE, ...) {
   merged <- check.spqr.params(params, ...)
-  if (merged[["method"]] == "MLE") {
-    model <- spqr.adam.train(params=merged, X=X, y=y, seed=seed, verbose=verbose)
-    class(model) <- c("spqr","adam")
-  } else {
+  if (merged[["method"]] == "Bayes") {
     model <- spqr.mcmc.train(params=merged, X=X, y=y, seed=seed, verbose=verbose)
     class(model) <- c("spqr","mcmc")
+  } else {
+    model <- spqr.adam.train(params=merged, X=X, y=y, seed=seed, verbose=verbose)
+    class(model) <- c("spqr","adam")
   }
   return(model)
 }
@@ -48,7 +48,8 @@ spqr.predict <- function(object, X, y, result="qf", tau=seq(0.05,0.95,0.05)) {
     X <- torch_tensor(X)
     model <- object$model
     model$eval()
-    coefs <- as.matrix(model(X))
+    nn<- model(X)
+    coefs <- as.matrix(nn$output)
   }
   B <- sp.basis(y, K = object$n.knots, integral = (result != "pdf"))
   df <- coefs%*%B

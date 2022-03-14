@@ -35,12 +35,12 @@ activation <- "tanh" # "relu" also available
 
 # not all parameters need to be specified, see utils.R for default values
 adam.params <- list(
-  lr = 0.01, # learning rate
+  lr = 0.03, # learning rate
   dropout = c(0,0), # a tuple with first element indicating dropout prob for input layer
                     # and second element for common dropout prob for hidden layers
   batchnorm = F,
   batch.size = 256,
-  epochs = 500,
+  epochs = 200,
   patience = 10, # early stopping number
   model = NULL, # user supported torch model
   save.path = file.path(getwd(),"spqr_model"), # path to save the best torch model during validation
@@ -51,9 +51,14 @@ adam.params <- list(
 mle.fit <- spqr.train(method="MLE", params=adam.params, X=X, y=Y, 
                       n.hidden=n.hidden, n.knots=n.knots, activation=activation)
 
+adam.params$lr <- 0.008
+# using adam to obtain map estimate
+map.fit <- spqr.train(method="MAP", prior="GSM", params=adam.params, X=X, y=Y, 
+                      n.hidden=n.hidden, n.knots=n.knots, activation=activation)
+
 mcmc.params <- list(
   sampler = "NUTS", # "HMC" also available
-  prior = "ARD", # "ISO" and "GSM" also available
+  prior = "ARD", # "GP" and "GSM" also available
   control = list(adapt_delta = 0.9), # HMC control parameters
   iter = 1000, # total number of iterations
   warmup = 250, # warmup iters for stepsize and mass matrix adaptation
@@ -71,50 +76,59 @@ yyy <- seq(0,1,length.out=101)
 
 # pdf
 pdf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "pdf")
+pdf.map <- spqr.predict(map.fit, X_test, yyy, result = "pdf")
 pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "pdf")
 
 par(mfrow=c(3,3))
 for(i in 1:9){
   pdf0 <- dYgivenX(yyy,X_test[i,]) # True
   pdf1 <- pdf.mle[i,]     # MLE
-  pdf2 <- pdf.bayes[i,]   # Bayes
+  pdf2 <- pdf.map[i,]     # MAP
+  pdf3 <- pdf.bayes[i,]   # Bayes
   plot(yyy,pdf0,ylim=c(0,1.5*max(pdf0)),type="l",
        xlab="y",ylab="PDF",main=paste("Observation",i))
   lines(yyy,pdf1,col=2)
   lines(yyy,pdf2,col=3)
+  lines(yyy,pdf3,col=4)
   if(i==1){
-    legend("topright",c("True","MLE","Bayes"),lty=1,col=1:3,bty="n")
+    legend("topright",c("True","MLE","MAP","Bayes"),lty=1,col=1:4,bty="n")
   }
 }
 
 # quantile function
 tau <- seq(0.05,0.95,0.05)
 qf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "qf", tau=tau)
+qf.map <- spqr.predict(map.fit, X_test, yyy, result = "qf", tau=tau)
 qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "qf", tau=tau)
 par(mfrow=c(3,3))
 for(i in 1:9){
   qf0 <- qYgivenX(tau,X_test[i,]) # True
   qf1 <- qf.mle[i,]     # MLE
-  qf2 <- qf.bayes[i,]   # Bayes
+  qf2 <- qf.map[i,]     # MAP
+  qf3 <- qf.bayes[i,]   # Bayes
   plot(tau,qf0,ylim=c(0,1.5*max(qf0)),type="l",
        xlab="tau",ylab="Quantile",main=paste("Observation",i))
   lines(tau,qf1,col=2)
   lines(tau,qf2,col=3)
+  lines(tau,qf3,col=4)
   if(i==1){
-    legend("topright",c("True","MLE","Bayes"),lty=1,col=1:3,bty="n")
+    legend("topright",c("True","MLE","MAP","Bayes"),lty=1,col=1:4,bty="n")
   }
 }
 
 # Goodness-of-fit
-cdf1 <- cdf2 <- {}
+cdf1 <- cdf2 <- cdf3 <- {}
 for (i in 1:length(Y)) {
   cdf1[i] <- spqr.predict(mle.fit, t(X[i,]), Y[i], result = "cdf")
-  cdf2[i] <- spqr.predict(bayes.fit, t(X[i,]), Y[i], result = "cdf")
+  cdf2[i] <- spqr.predict(map.fit, t(X[i,]), Y[i], result = "cdf")
+  cdf3[i] <- spqr.predict(bayes.fit, t(X[i,]), Y[i], result = "cdf")
 }
-par(mfrow=c(1,2))
+par(mfrow=c(1,3))
 qqplot(cdf1, runif(n),xlab="CDF",ylab="U(0,1)",main="MLE")
 abline(0,1,col=2,lwd=2)
-qqplot(cdf2, runif(n),xlab="CDF",ylab="U(0,1)",main="Bayes")
+qqplot(cdf2, runif(n),xlab="CDF",ylab="U(0,1)",main="MAP")
+abline(0,1,col=2,lwd=2)
+qqplot(cdf3, runif(n),xlab="CDF",ylab="U(0,1)",main="Bayes")
 abline(0,1,col=2,lwd=2)
 
 # Sensitivity analysis
@@ -131,22 +145,25 @@ pred.fun <- function(X, tau) {
 par(mfrow=c(3,3))
 for (j in c(2,3,4)) {
   ale.mle <- spqr.ale(mle.fit, tau, J=j)
+  ale.map <- spqr.ale(map.fit, tau, J=j)
   ale.bayes <- spqr.ale(bayes.fit, tau, J=j)
   ale.ans <- spqr.ale(list(X=X), tau, J=j, pred.fun=pred.fun)
   
   for (i in 1:length(tau)) {
     plot(ale.ans$x.values, ale.ans$f.values[,i], type="l", xlab=paste0("x.",j), ylab="ALE", col=1)
     lines(ale.mle$x.values, ale.mle$f.values[,i], col=2)
-    lines(ale.bayes$x.values, ale.bayes$f.values[,i], col=3)
+    lines(ale.map$x.values, ale.map$f.values[,i], col=3)
+    lines(ale.bayes$x.values, ale.bayes$f.values[,i], col=4)
     if(i==1){
-      legend("topright",c("True","MLE","Bayes"),lty=1,col=1:3,bty="n")
+      legend("topright",c("True","MLE","MAP","Bayes"),lty=1,col=1:4,bty="n")
     }
   }
 }
 
 # Interaction effect for (x2,x3)
-par(mfrow=c(1,3))
+par(mfrow=c(2,2))
 ale.mle <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
+ale.map <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
 ale.bayes <- spqr.ale(bayes.fit, tau, J=c(2,3))
 ale.ans <- spqr.ale(list(X=X), tau, J=c(2,3), pred.fun=pred.fun)
 
@@ -154,6 +171,8 @@ image(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1],xlab =
 contour(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1], add=TRUE, drawlabels=TRUE)
 image(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "MLE")
 contour(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.map$x.values[[1]], ale.map$x.values[[2]], ale.map$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "MAP")
+contour(ale.map$x.values[[1]], ale.map$x.values[[2]], ale.map$f.values[,,1], add=TRUE, drawlabels=TRUE)
 image(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "Bayes")
 contour(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], add=TRUE, drawlabels=TRUE)
 

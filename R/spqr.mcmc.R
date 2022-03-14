@@ -121,9 +121,13 @@ spqr.mcmc.train <-
     
     # Gibbs sampler for scales
     bnn.params <- 
-      gibbs.update(bnn.params, WB, params[["prior"]],
-                   params[["sigma.prior.a"]], params[["sigma.prior.b"]], 
-                   params[["lambda.prior.a"]], params[["lambda.prior.b"]])
+      gibbs.update(bnn.params, 
+                   WB, 
+                   params[["prior"]],
+                   params[["sigma.prior.a"]], 
+                   params[["sigma.prior.b"]], 
+                   params[["lambda.prior.a"]], 
+                   params[["lambda.prior.b"]])
     
     if (i <= warmup) {
       if (verbose == 2) pb(message = "Warming up...")
@@ -241,7 +245,7 @@ gibbs.update <- function(params, WB, prior, global_a, global_b, local_a, local_b
   W <- WB$W
   b <- WB$b
   if (prior == "ARD" || prior == "GSM") {
-    # local scale shouldn't be touched for "ISO" prior
+    # local scale shouldn't be touched for "GP" prior
     lambda_W <- params$lambda_W
     lambda_b <- params$lambda_b
   }

@@ -38,8 +38,8 @@ check.spqr.params <- function(params, ...) {
     if (params[["sampler"]] %notin% c("HMC", "NUTS"))
       stop("'sampler' must be either 'HMC' or 'NUTS'.")
   
-    if (params[["prior"]] %notin% c("ISO","ARD","GSM"))
-      stop("'prior' must be one of c('ISO','ARD','GSM').")
+    if (params[["prior"]] %notin% c("GP","ARD","GSM"))
+      stop("'prior' must be one of c('GP','ARD','GSM').")
     
   } else {
     params <- update.adam.params(params)
@@ -52,11 +52,16 @@ update.adam.params <- function(params) {
   default <- list(
     n.hidden = NULL,
     n.knots = NULL,
+    prior = "ARD",
     lr = 0.05,
     dropout = c(0,0),
     batchnorm = FALSE,
     epochs = 50,
     batch.size = NULL,
+    sigma.prior.a = 0.001, 
+    sigma.prior.b = 0.001, 
+    lambda.prior.a = 0.5, 
+    lambda.prior.b = 0.5,
     model = NULL,
     save.path = file.path(getwd(),"spqr_model"),
     save.name = "spqr.model.pt",
