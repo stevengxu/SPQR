@@ -163,7 +163,7 @@ for (j in c(2,3,4)) {
 # Interaction effect for (x2,x3)
 par(mfrow=c(2,2))
 ale.mle <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
-ale.map <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
+ale.map <- spqr.ale(map.fit, tau=0.5, J=c(2,3))
 ale.bayes <- spqr.ale(bayes.fit, tau, J=c(2,3))
 ale.ans <- spqr.ale(list(X=X), tau, J=c(2,3), pred.fun=pred.fun)
 
