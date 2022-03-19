@@ -74,10 +74,10 @@ bayes.fit <- spqr.train(method="Bayes", params=mcmc.params, X=X, y=Y,
 X_test <- X[1:9,]
 yyy <- seq(0,1,length.out=101)
 
-# pdf
-pdf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "pdf")
-pdf.map <- spqr.predict(map.fit, X_test, yyy, result = "pdf")
-pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "pdf")
+# pdf point estimates
+pdf.mle <- spqr.predict(mle.fit, X_test, yyy, result="pdf")
+pdf.map <- spqr.predict(map.fit, X_test, yyy, result="pdf")
+pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="pdf")
 
 par(mfrow=c(3,3))
 for(i in 1:9){
@@ -95,11 +95,29 @@ for(i in 1:9){
   }
 }
 
+# pdf points estimates and credible intervals
+pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="pdf", ci.level=0.95)
+par(mfrow=c(3,3))
+for(i in 1:9){
+  pdf0 <- dYgivenX(yyy,X_test[i,]) # True
+  pdf1.lb <- pdf.bayes[i,,"lower.bound"]
+  pdf1 <- pdf.bayes[i,,"mean"]
+  pdf1.ub <- pdf.bayes[i,,"upper.bound"]
+  plot(yyy,pdf0,ylim=c(0,1.5*max(pdf0)),type="l",
+       xlab="y",ylab="PDF",main=paste("Observation",i))
+  lines(yyy,pdf1,col=2)
+  lines(yyy,pdf1.lb,col=2,lty=2)
+  lines(yyy,pdf1.ub,col=2,lty=2)
+  if(i==1){
+    legend("topright",c("True","Bayes"),lty=1,col=1:2,bty="n")
+  }
+}
+
 # quantile function
 tau <- seq(0.05,0.95,0.05)
-qf.mle <- spqr.predict(mle.fit, X_test, yyy, result = "qf", tau=tau)
-qf.map <- spqr.predict(map.fit, X_test, yyy, result = "qf", tau=tau)
-qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result = "qf", tau=tau)
+qf.mle <- spqr.predict(mle.fit, X_test, yyy, result="qf", tau=tau)
+qf.map <- spqr.predict(map.fit, X_test, yyy, result="qf", tau=tau)
+qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="qf", tau=tau)
 par(mfrow=c(3,3))
 for(i in 1:9){
   qf0 <- qYgivenX(tau,X_test[i,]) # True
@@ -116,12 +134,30 @@ for(i in 1:9){
   }
 }
 
+# qf points estimates and credible intervals
+qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="qf", tau=tau, ci.level=0.95)
+par(mfrow=c(3,3))
+for(i in 1:9){
+  qf0 <- qYgivenX(tau,X_test[i,]) # True
+  qf1.lb <- qf.bayes[i,,"lower.bound"]
+  qf1 <- qf.bayes[i,,"mean"]
+  qf1.ub <- qf.bayes[i,,"upper.bound"]
+  plot(tau,qf0,ylim=c(0,1.5*max(qf0)),type="l",
+       xlab="tau",ylab="Quantile",main=paste("Observation",i))
+  lines(tau,qf1,col=2)
+  lines(tau,qf1.lb,col=2,lty=2)
+  lines(tau,qf1.ub,col=2,lty=2)
+  if(i==1){
+    legend("topright",c("True","Bayes"),lty=1,col=1:2,bty="n")
+  }
+}
+
 # Goodness-of-fit
 cdf1 <- cdf2 <- cdf3 <- {}
 for (i in 1:length(Y)) {
-  cdf1[i] <- spqr.predict(mle.fit, t(X[i,]), Y[i], result = "cdf")
-  cdf2[i] <- spqr.predict(map.fit, t(X[i,]), Y[i], result = "cdf")
-  cdf3[i] <- spqr.predict(bayes.fit, t(X[i,]), Y[i], result = "cdf")
+  cdf1[i] <- spqr.predict(mle.fit, t(X[i,]), Y[i], result="cdf")
+  cdf2[i] <- spqr.predict(map.fit, t(X[i,]), Y[i], result="cdf")
+  cdf3[i] <- spqr.predict(bayes.fit, t(X[i,]), Y[i], result="cdf")
 }
 par(mfrow=c(1,3))
 qqplot(cdf1, runif(n),xlab="CDF",ylab="U(0,1)",main="MLE")
@@ -162,8 +198,8 @@ for (j in c(2,3,4)) {
 
 # Interaction effect for (x2,x3)
 par(mfrow=c(2,2))
-ale.mle <- spqr.ale(mle.fit, tau=0.5, J=c(2,3))
-ale.map <- spqr.ale(map.fit, tau=0.5, J=c(2,3))
+ale.mle <- spqr.ale(mle.fit, tau, J=c(2,3))
+ale.map <- spqr.ale(map.fit, tau, J=c(2,3))
 ale.bayes <- spqr.ale(bayes.fit, tau, J=c(2,3))
 ale.ans <- spqr.ale(list(X=X), tau, J=c(2,3), pred.fun=pred.fun)
 
@@ -181,8 +217,15 @@ par(mfrow=c(1,1))
 
 # Generate ALE plots directly from fitted models
 # Main effect across tau
-autoplot(bayes.fit, type="ALE", var.index=2, tau=c(0.2,0.4,0.6,0.8))
+autoplot(bayes.fit, type="ALE", var.index=3, tau=c(0.2,0.4,0.6,0.8))
+# Main effect across tau with credible intervals
+# SLOW!!
+autoplot(bayes.fit, type="ALE", var.index=3, tau=c(0.2,0.4,0.6,0.8), ci.level=0.95)
 # Interaction effect across tau
 autoplot(bayes.fit, type="ALE", var.index=c(2,3), tau=c(0.2,0.4,0.6,0.8))
 # Variable importance for across tau
 autoplot(bayes.fit, type="VI", var.index=c(2,3,4,5), tau=c(0.2,0.4,0.6,0.8))
+# Variable importance for across tau with credible intervals
+# VERY SLOW!!
+autoplot(bayes.fit, type="VI", var.index=c(2,3,4,5), tau=c(0.2,0.4,0.6,0.8), ci.level=0.95)
+
