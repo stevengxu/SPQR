@@ -23,10 +23,10 @@ spqr.mcmc.train <-
     npar <- npar + (V[l] + 1)*V[l+1]
   }
   
-  control <- update.hmc.control(params[["hmc.control"]])
+  control <- update.hmc.control(params[["control"]])
   metric <- control$metric
   if (metric %notin% c("unit","diag","dense"))
-    abort("'metric' must be one of c('unit','diag','dense')")
+    abort("`metric` must be one of c('unit','diag','dense')")
   eps <- control$stepsize
   
   if (params[["sampler"]] == "NUTS") {

@@ -1,30 +1,28 @@
 spqr.adam.train <- 
   function(params, X, y, seed = NULL, verbose = TRUE) {
-  # we want X to be p x n
-  Xt <- t(X)
-  V <- c(nrow(Xt),params[["n.hidden"]],params[["n.knots"]])
+    
+  V <- c(ncol(X),params[["n.hidden"]],params[["n.knots"]])
   # Define dataset and dataloader
   ds <- dataset(
     # modified from https://torch.mlverse.org/start/custom_dataset/  
     # See example in above link on how to set up categorical variables etc
     # I'm extracting the index variable since I need it for my custom loss function
     initialize = function(indices) {
-      #df <- na.omit(df) 
-      self$x <- torch_tensor(Xt[,indices,drop = FALSE])
+      self$x <- torch_tensor(X[indices,,drop = FALSE])
       self$y <- torch_tensor(y[indices])
     },
     
     .getitem = function(i) {
-      list(x = self$x[,i], y = self$y[i], index = i)
+      list(x = self$x[i,], y = self$y[i], index = i)
     },
     
     .length = function() {
       self$y$size()[[1]]
     }
   )
-  
-  train_indices <- sample(1:ncol(Xt), size = floor(0.8 * ncol(Xt)))
-  valid_indices <- setdiff(1:ncol(Xt), train_indices)
+  N <- nrow(X)
+  valid_indices <- sample(1:N, size = floor(params[["validation.pct"]]*N))
+  train_indices <- setdiff(1:N, valid_indices)
   
   train_ds <- ds(train_indices)
   train_dl <- train_ds %>% dataloader(batch_size = params[["batch.size"]], 
@@ -66,12 +64,13 @@ spqr.adam.train <-
   }
   
   optimizer <- optim_adam(model$parameters, lr = params[["lr"]])
-  best_loss <- Inf
   counter <- 0
   if(!dir.exists(params[["save.path"]]))
     dir.create(params[["save.path"]])
   
   save_name <- file.path(params[["save.path"]], params[["save.name"]])
+  last_valid_loss <- Inf
+  last_train_loss <- Inf
   for (epoch in 1:params[["epochs"]]) {
     
     model$train()
@@ -107,23 +106,179 @@ spqr.adam.train <-
     })
     train_loss <- mean(train_losses)
     valid_loss <- mean(valid_losses)
-    if (verbose)
-      cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch, 
-                  train_loss, valid_loss))
-    if (valid_loss < (best_loss - 0.01)) {
-      torch_save(model, save_name)
-      best_loss <- valid_loss
-      counter <- 0
+    if (verbose) {
+      if (epoch==1 || epoch%%params[['print.every.epochs']]==0) {
+        cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch, 
+                    train_loss, valid_loss))
+      }
+    }
+    if (!is.null(params[["early.stopping.epochs"]])) {
+      if (valid_loss < (last_valid_loss - 0.01)) {
+        torch_save(model, save_name)
+        last_valid_loss <- valid_loss
+        last_train_loss <- train_loss
+        counter <- 0
+      } else {
+        counter <- counter + 1
+        if (counter >= params[["early.stopping.epochs"]]) {
+          if (verbose) {
+            cat(sprintf("Stopping... Best epoch: %d\n", epoch))
+            cat(sprintf("Final loss: training: %3f, validation: %3f\n\n", 
+                        last_train_loss, last_valid_loss))
+          }
+          break
+        }
+      }
     } else {
-      counter <- counter + 1
-      if (counter >= params[["patience"]]) { break }
+      last_valid_loss <- valid_loss
+      last_train_loss <- train_loss
     }
   }
   
   best_model <- torch_load(save_name)
-  out <- list(model = best_model, loglik = -best_loss, X = X, y = y, 
-              n.knots = n.knots)
+  out <- list(model=best_model, loglik.train= -last_train_loss, 
+              loglik.eval= -last_valid_loss, X = X, y = y, n.knots=n.knots)
   return(out)
+}
+
+
+spqr.adam.cv <- 
+  function(params, X, y, folds, verbose) {
+    
+  K <- length(folds)
+  V <- c(ncol(X),params[["n.hidden"]],params[["n.knots"]])
+  # Define dataset and dataloader
+  ds <- dataset(
+    initialize = function(indices) {
+      self$x <- torch_tensor(X[indices,,drop = FALSE])
+      self$y <- torch_tensor(y[indices])
+    },
+    
+    .getitem = function(i) {
+      list(x = self$x[i,], y = self$y[i], index = i)
+    },
+    
+    .length = function() {
+      self$y$size()[[1]]
+    }
+  )
+  N <- nrow(X)
+  # Computing the basis and converting it to a tensor beforehand to save
+  # computational time; this is used every iteration for computing loss
+  Btotal <- sp.basis(y, params[["n.knots"]])
+  # Define custom loss function
+  nloglik_loss = function(indices, basis, coefs) {
+    loglik <- basis[,indices]$mul(coefs$t())$sum(1)$log()$sum()
+    return(-loglik)
+  }
+  cv_losses <- numeric(K)
+  for (k in 1:K) {
+    valid_indices <- folds[[k]]
+    train_indices <- unlist(folds[-k])
+    train_ds <- ds(train_indices)
+    train_dl <- train_ds %>% dataloader(batch_size = params[["batch.size"]], 
+                                        shuffle = TRUE)
+    valid_ds <- ds(valid_indices)
+    valid_dl <- valid_ds %>% dataloader(batch_size = params[["batch.size"]], 
+                                        shuffle = FALSE)
+    if (is.null(params[["model"]])) {
+      # Use the default template
+      if (params[["method"]] == "MAP") {
+        model <- nn_spqr_MAP(V, # MAP estimation using one of the three priors
+                             params[["dropout"]], 
+                             params[["batchnorm"]], 
+                             params[["activation"]], 
+                             params[["prior"]],
+                             params[["sigma.prior.a"]], 
+                             params[["sigma.prior.b"]], 
+                             params[["lambda.prior.a"]], 
+                             params[["lambda.prior.b"]])
+      } else {
+        model <- nn_spqr_MLE(V, # MLE estimation
+                             params[["dropout"]], 
+                             params[["batchnorm"]], 
+                             params[["activation"]])
+      }
+    }
+    Btrain <- torch_tensor(Btotal[,train_indices])
+    Bvalid <- torch_tensor(Btotal[,valid_indices])
+    
+    optimizer <- optim_adam(model$parameters, lr = params[["lr"]])
+    counter <- 0
+    
+    if (verbose) {
+      cat(sprintf("Starting fold: %d/%d\n", k, K))
+    }
+    
+    last_valid_loss <- Inf
+    last_train_loss <- Inf
+    for (epoch in 1:params[["epochs"]]) {
+      
+      model$train()
+      train_losses <- c()  
+      
+      coro::loop(for (b in train_dl) {
+        
+        optimizer$zero_grad()
+        result <- model(b$x) 
+        indices <- b$index
+        nloglik <- nloglik_loss(indices=indices, basis=Btrain, coefs=result$output)
+        loss <- nloglik - result$logprior
+        
+        loss$backward()
+        optimizer$step()
+        
+        train_losses <- c(train_losses, loss$item())
+        
+      })
+      
+      model$eval()
+      valid_losses <- c()
+      
+      coro::loop(for (b in valid_dl) {
+        
+        result <- model(b$x)
+        indices <- b$index
+        nloglik <- nloglik_loss(indices=indices, basis=Bvalid, coefs=result$output)
+        loss <- nloglik - result$logprior
+        
+        valid_losses <- c(valid_losses, loss$item())
+        
+      })
+      train_loss <- mean(train_losses)
+      valid_loss <- mean(valid_losses)
+      if (verbose) {
+        if (epoch==1 || epoch%%params[['print.every.epochs']]==0) {
+          cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch, 
+                      train_loss, valid_loss))
+        }
+      }
+      if (!is.null(params[["early.stopping.epochs"]])) {
+        if (valid_loss < (last_valid_loss - 0.01)) {
+          last_valid_loss <- valid_loss
+          last_train_loss <- train_loss
+          counter <- 0
+        } else {
+          counter <- counter + 1
+          if (counter >= params[["early.stopping.epochs"]]) {
+            if (verbose) {
+              cat(sprintf("Stopping... Best epoch: %d\n", epoch))
+              cat(sprintf("Final loss: training: %3f, validation: %3f\n\n", 
+                          last_train_loss, last_valid_loss))
+            }
+            break
+          }
+        }
+      } else {
+        last_valid_loss <- valid_loss
+        last_train_loss <- train_loss
+      }
+    }
+    cv_losses[k] <- last_valid_loss
+  }
+  out <- list(params=params, cv_loss=mean(cv_losses), folds=folds)
+  class(out) <- "spqr.adam.cv"
+  invisible(out)
 }
 
 nn_spqr_MLE <- nn_module(

@@ -18,15 +18,15 @@ source("spqr.adam.R")
 
 
 spqr.train <- function(params = list(), X, y, seed = NULL, verbose = TRUE, ...) {
-  merged <- check.spqr.params(params, ...)
-  if (merged[["method"]] == "Bayes") {
-    model <- spqr.mcmc.train(params=merged, X=X, y=y, seed=seed, verbose=verbose)
+  params <- check.spqr.params(params, ...)
+  if (params[["method"]] == "Bayes") {
+    model <- spqr.mcmc.train(params=params, X=X, y=y, seed=seed, verbose=verbose)
     class(model) <- c("spqr","mcmc")
   } else {
-    model <- spqr.adam.train(params=merged, X=X, y=y, seed=seed, verbose=verbose)
+    model <- spqr.adam.train(params=params, X=X, y=y, seed=seed, verbose=verbose)
     class(model) <- c("spqr","adam")
   }
-  return(model)
+  invisible(model)
 }
 
 spqr.predict <- function(object, X, y, result = "qf", tau = seq(0.05,0.95,0.05), 
@@ -96,16 +96,35 @@ spqr.predict <- function(object, X, y, result = "qf", tau = seq(0.05,0.95,0.05),
   }
 }
 
+spqr.cv <- function(params = list(), X, y, nfold, folds=NULL, stratified=FALSE, 
+                    verbose = TRUE, ...) {
+  params <- check.spqr.params(params, ...)
+  if (params[["method"]] == c("Bayes")) {
+    stop("Cross-validation not available for `method` = 'Bayes'") 
+  }
+  if (!is.null(folds)) {
+    if (!is.list(folds) || length(folds) < 2)
+      stop("`folds` must be a list with 2 or more elements that are vectors of indices for each CV-fold")
+    nfold <- length(folds)
+  } else {
+    if (nfold <= 1)
+      stop("`nfold` must be > 1")
+    folds <- spqr.createFolds(y, nfold, stratified)
+  }
+  out <- spqr.adam.cv(params=params, X=X, y=y, folds=folds, verbose=verbose)
+  invisible(out)
+}
+
 autoplot.spqr <- function(object, type = "ALE", var.index = NULL, tau = 0.5,
                           var.names = NULL, show.data = FALSE, ci.level = NULL, 
                           ...) {
   if (!is.numeric(var.index))
-    stop("'var.index' must be a numeric vector.")
+    stop("`var.index` must be a numeric vector.")
   if (!is.null(var.names) && length(var.names) != length(var.index))
-    stop("'var.names' must have the same length as 'var.index'.")
+    stop("`var.names` must have the same length as 'var.index'.")
   if (type == "ALE") {
     if (length(var.index) > 2)
-      stop("For ALE plot, 'var.index' must be a vector of length one or two.")
+      stop("For ALE plot, `var.index` must be a vector of length one or two.")
     ale <- spqr.ale(object, J=var.index, tau=tau, ci.level=ci.level, ...)
     if (length(var.index) == 1) {
       yrange <- range(ale$f.values)
@@ -190,7 +209,7 @@ autoplot.spqr <- function(object, type = "ALE", var.index = NULL, tau = 0.5,
     }
   } else {
     if (length(var.index) == 1)
-      stop("For VI plot, 'var.index' must be a vector of length > 1.")
+      stop("For VI plot, `var.index` must be a vector of length > 1.")
     x.ticks <- {}
     if (!is.null(var.names)) {
       x.ticks <- var.names
@@ -282,7 +301,7 @@ spqr.ale <-
   #center <- FALSE # centering is not meaningful for quantile predictions
   
   if (length(J) > 2)
-    stop("J must be a vector of length one or two.")
+    stop("`J` must be a vector of length one or two.")
   
   firstCheck <- class(X[,J[1]]) == "numeric" || class(X[,J[1]]) == "integer"
   if (length(J) == 1) { #calculate main effects ALE plot

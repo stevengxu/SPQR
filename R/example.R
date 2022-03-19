@@ -41,7 +41,7 @@ adam.params <- list(
   batchnorm = F,
   batch.size = 256,
   epochs = 200,
-  patience = 10, # early stopping number
+  early.stopping.epochs = 10, # early stopping number
   model = NULL, # user supported torch model
   save.path = file.path(getwd(),"spqr_model"), # path to save the best torch model during validation
   save.name = "spqr.model.pt" # file to save the ...
@@ -50,6 +50,25 @@ adam.params <- list(
 # using adam to obtain mle estimate
 mle.fit <- spqr.train(method="MLE", params=adam.params, X=X, y=Y, 
                       n.hidden=n.hidden, n.knots=n.knots, activation=activation)
+
+# Calculate K-fold CV error
+cv.out <- spqr.cv(method="MLE", params=adam.params, X=X, y=Y, n.hidden=n.hidden, 
+                  n.knots=n.knots, activation=activation, nfold=5)
+
+# alternatively the user can use pre-computed folds
+# this can be wrapped in a gridsearch skeleton for parameter selection purpose
+if (FALSE) {
+  folds <- spqr.createFolds(Y, nfold=5)
+  lr.grid <- exp(-5:-1)
+  result <- do.call('rbind',lapply(lr.grid, FUN=function(lr) {
+    adam.params$lr <- lr
+    cv.out <- spqr.cv(method="MLE", params=adam.params, X=X, y=Y, n.hidden=n.hidden, 
+                      n.knots=n.knots, activation=activation, folds=folds)
+    c(lr, cv.out$cv_loss)
+  }))
+  colnames(result) <- c("lr","cve")
+}
+
 
 adam.params$lr <- 0.008
 # using adam to obtain map estimate

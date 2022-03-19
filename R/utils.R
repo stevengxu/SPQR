@@ -2,13 +2,13 @@
 
 check.spqr.params <- function(params, ...) {
   if (!identical(class(params), "list"))
-    stop("params must be a list")
+    stop("`params` must be a list")
   
   # merge parameters from the params and the dots-expansion
   dot_params <- list(...)
   if (length(intersect(names(params),
                        names(dot_params))) > 0)
-    stop("Same parameters in 'params' and in the call are not allowed. Please check your 'params' list.")
+    stop("Same parameters in `params` and in the call are not allowed. Please check your `params` list.")
   params <- c(params, dot_params)
   
   # providing a parameter multiple times makes sense only for 'eval_metric'
@@ -30,16 +30,16 @@ check.spqr.params <- function(params, ...) {
             We recommend setting it to at least 8.")
   
   if (params[["activation"]] %notin% c("tanh","relu"))
-    stop("'activation' must be either 'tanh' or 'relu'.")
+    stop("`activation` must be either 'tanh' or 'relu'.")
   
   if (params[["method"]] == "Bayes") {
     params <- update.mcmc.params(params)
     
     if (params[["sampler"]] %notin% c("HMC", "NUTS"))
-      stop("'sampler' must be either 'HMC' or 'NUTS'.")
+      stop("`sampler` must be either 'HMC' or 'NUTS'.")
   
     if (params[["prior"]] %notin% c("GP","ARD","GSM"))
-      stop("'prior' must be one of c('GP','ARD','GSM').")
+      stop("`prior` must be one of c('GP','ARD','GSM').")
     
   } else {
     params <- update.adam.params(params)
@@ -58,14 +58,16 @@ update.adam.params <- function(params) {
     batchnorm = FALSE,
     epochs = 50,
     batch.size = NULL,
+    validation.pct = 0.2,
+    early.stopping.epochs = 10,
+    print.every.epochs = 10,
     sigma.prior.a = 0.001, 
     sigma.prior.b = 0.001, 
     lambda.prior.a = 0.5, 
     lambda.prior.b = 0.5,
     model = NULL,
     save.path = file.path(getwd(),"spqr_model"),
-    save.name = "spqr.model.pt",
-    patience = 10
+    save.name = "spqr.model.pt"
   )
   if (!is.null(params)) {
     for (i in names(params))
@@ -278,4 +280,60 @@ print_mcmc_timing <- function(time_warmup, time_total){
   inform(paste0(x, sprintf("%.1f", time_warmup), ' seconds (Warmup)'))
   inform(paste0(x, sprintf("%.1f", time_total-time_warmup), ' seconds (Sampling)'))
   inform(paste0(x, sprintf("%.1f", time_total), ' seconds (Total)'))
+}
+
+## Generate random (stratified if needed) CV folds
+## Borrowed from xgboost::generate.cv.folds
+spqr.createFolds <- function(y, nfold, stratified=FALSE) {
+  # shuffle
+  nrows <- length(y)
+  rnd_idx <- sample.int(nrows)
+  if (stratified) {
+    # stratified by quantiles
+    y <- y[rnd_idx]
+    cuts <- floor(length(y) / nfold)
+    if (cuts < 2) cuts <- 2
+    if (cuts > 5) cuts <- 5
+    y <- cut(y,
+             unique(stats::quantile(y, probs = seq(0, 1, length = cuts))),
+             include.lowest = TRUE)
+    
+    if (nfold < length(y)) {
+      ## reset levels so that the possible levels and
+      ## the levels in the vector are the same
+      y <- factor(as.character(y))
+      numInClass <- table(y)
+      foldVector <- vector(mode = "integer", length(y))
+      
+      ## For each class, balance the fold allocation as far
+      ## as possible, then resample the remainder.
+      ## The final assignment of folds is also randomized.
+      for (i in seq_along(numInClass)) {
+        ## create a vector of integers from 1:nfold as many times as possible without
+        ## going over the number of samples in the class. Note that if the number
+        ## of samples in a class is less than nfold, nothing is produced here.
+        seqVector <- rep(seq_len(nfold), numInClass[i] %/% nfold)
+        ## add enough random integers to get  length(seqVector) == numInClass[i]
+        if (numInClass[i] %% nfold > 0) seqVector <- c(seqVector, sample.int(nfold, numInClass[i] %% nfold))
+        ## shuffle the integers for fold assignment and assign to this classes's data
+        ## seqVector[sample.int(length(seqVector))] is used to handle length(seqVector) == 1
+        foldVector[y == dimnames(numInClass)$y[i]] <- seqVector[sample.int(length(seqVector))]
+      }
+    } else {
+      foldVector <- seq(along = y)
+    }
+    
+    folds <- split(seq(along = y), foldVector)
+    names(folds) <- NULL
+  } else {
+    # make simple non-stratified folds
+    kstep <- length(rnd_idx) %/% nfold
+    folds <- list()
+    for (i in seq_len(nfold - 1)) {
+      folds[[i]] <- rnd_idx[seq_len(kstep)]
+      rnd_idx <- rnd_idx[-seq_len(kstep)]
+    }
+    folds[[nfold]] <- rnd_idx
+  }
+  return(folds)
 }
