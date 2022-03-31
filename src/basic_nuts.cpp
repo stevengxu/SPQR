@@ -201,7 +201,7 @@ class basic_nuts {
       this->z = z_sample;
       Rcpp::List out = 
         Rcpp::List::create(Rcpp::Named("theta") = this->z.q,
-                           Rcpp::Named("accept_prob") = accept_prob);
+                           Rcpp::Named("accept.prob") = accept_prob);
       return out;
       
     }

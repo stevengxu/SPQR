@@ -110,7 +110,7 @@ class static_hmc {
       
       Rcpp::List out = 
         Rcpp::List::create(Rcpp::Named("theta") = this->z.q,
-                           Rcpp::Named("accept_prob") = acceptProb);
+                           Rcpp::Named("accept.prob") = acceptProb);
       return out;
     }
 };
@@ -134,9 +134,9 @@ Rcpp::List static_hmc_diag(
   
   Rcpp::List res = sampler.transition(epsilon, Minv, Misqrt);
   
-  info["num_steps__"] = sampler.get_L();
+  info["num.steps"] = sampler.get_L();
   if (sampler.is_divergent())
-    info["divergent__"] = 1;
+    info["divergent"] = 1;
   
   return res;
 }
@@ -160,9 +160,9 @@ Rcpp::List static_hmc_dense(
   
   Rcpp::List res = sampler.transition(epsilon, Minv, Misqrt);
   
-  info["num_steps__"] = sampler.get_L();
+  info["num.steps"] = sampler.get_L();
   if (sampler.is_divergent())
-    info["divergent__"] = 1;
+    info["divergent"] = 1;
   
   return res;
 }

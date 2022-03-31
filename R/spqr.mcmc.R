@@ -2,170 +2,144 @@ sourceCpp("../src/advanced_nuts.cpp")
 sourceCpp("../src/static_hmc.cpp")
 sourceCpp("../src/find_epsilon.cpp")
 
-spqr.mcmc.train <- 
-  function(params, X, y, seed = NULL, verbose = 2)
+SPQR.mcmc <- 
+  function(params, X, Y, verbose = TRUE)
 {
-  if (!is.null(seed)) set.seed(seed)
-
-  now <- function() {
-    paste0('[', format(Sys.time(), "%Y-%m-%d %H:%M:%S"), ']')
-  }  
-    
   X <- t(X)
-  B <- sp.basis(y, params[["n.knots"]]) # M-spline basis
-  iter <- params[["iter"]]; warmup <- params[["warmup"]]; thin <- params[["thin"]]
+  B <- t(.basis(Y, params$n.knots)) # M-spline basis
   nvar <- nrow(X)
-  V <- c(nvar, params[["n.hidden"]], params[["n.knots"]]) # Number of nodes for each layer
-  num_layers <- length(V) - 1
-  bnn.params <- list(V=V, activation = params[["activation"]])
+  V <- c(nvar, params$n.hidden, params$n.knots) # Number of nodes for each layer
+  n.layers <- length(V) - 1 # number of layers
+  bnn.params <- list(V=V, activation=params$activation)
   npar <- 0
-  for (l in 1:num_layers) {
-    npar <- npar + (V[l] + 1)*V[l+1]
-  }
+  for (l in 1:n.layers) npar <- npar + (V[l] + 1)*V[l+1]
   
-  control <- update.hmc.control(params[["control"]])
-  metric <- control$metric
-  if (metric %notin% c("unit","diag","dense"))
-    abort("`metric` must be one of c('unit','diag','dense')")
+  control <- .update.control(params$control)
+  metric <- match.arg(control$metric, c("unit","diag","dense"))
+  
   eps <- control$stepsize
   
-  if (params[["sampler"]] == "NUTS") {
-    constraint_name <- "treedepth__"
-    constraint <- control$max_tree_depth
+  if (params$sampler == "NUTS") {
+    const.var <- "treedepth"
+    const <- control$max.treedepth
     sampler <- "advanced_nuts"
   } else {
-    constraint_name <- "num_steps__"
-    constraint <- control$int_time
+    const.var <- "num.steps"
+    const <- control$int.time
     sampler <- "static_hmc"
   }
   sampling <- eval(parse(text = paste(sampler, metric, sep = "_")))
-  init_stepsize <- eval(parse(text = paste("init_stepsize", metric, sep = "_")))
+  init.stepsize <- eval(parse(text = paste("init_stepsize", metric, sep = "_")))
   
   # Dual Averaging arguments
-  adapt_Eps <- is.null(eps)
-  if (adapt_Eps) {
-    gamma <- control$adapt_gamma
-    delta <- control$adapt_delta
-    kappa <- control$adapt_kappa
-    t0 <- control$adapt_t0
+  adapt.eps <- is.null(eps)
+  if (adapt.eps) {
+    gamma <- control$gamma
+    delta <- control$delta
+    kappa <- control$kappa
+    t0 <- control$t0
   }
   # Mass matrix adaptation arguments
-  adapt_Mass <- metric != "unit" && adapt_Eps 
+  adapt.M <- metric != "unit" && adapt.eps 
   # The inverse metric `Minv` aims to approximate the covariance matrix
   # of the parameters. It is always initialized to unit diagonal.
   Misqrt <- Minv <- rep(1, npar)
-  if (adapt_Mass) {
-    if (metric == "dense")
-      Misqrt <- Minv <- diag(npar)
-    
-    window_adapter <- initialize_window_adapter(warmup, control)
+  if (adapt.M) {
+    if (metric == "dense") Misqrt <- Minv <- diag(npar)
+    window.adapter <- initialize_window_adapter(params$warmup, control)
     # Initialize variance adaptation placeholders
-    welford_num_samples <- 0
-    welford_m <- rep(0, npar)  # First moment
+    wns <- 0
+    wm <- rep(0, npar)  # First moment
     # Second moment
     if(metric == "diag")
-      welford_m2 <- rep(0, npar)
+      wm2 <- rep(0, npar)
     else
-      welford_m2 <- matrix(0, npar, npar)
+      wm2 <- matrix(0, npar, npar)
   }
   
   # Initial values
-  theta <- nn.init.xavier.uniform(V)
+  theta <- .init.W(V)
   
-  bnn.params$sigma_W <- rep(1, num_layers)
-  bnn.params$sigma_b <- rep(1, num_layers)
-  bnn.params$lambda_W <- vector("list", num_layers)
-  for (l in 1:num_layers) 
-    bnn.params$lambda_W[[l]] <- rep(1, V[l])
-  
-  bnn.params$lambda_b <- rep(1, num_layers)
+  bnn.params$sigma_W <- rep(1, n.layers)
+  bnn.params$sigma_b <- rep(1, n.layers)
+  bnn.params$lambda_W <- vector("list", n.layers)
+  for (l in 1:n.layers) bnn.params$lambda_W[[l]] <- rep(1, V[l])
+  bnn.params$lambda_b <- rep(1, n.layers)
    
-  
-  nsave <- floor((iter-warmup)/thin)
+  nsave <- floor((params$iter-params$warmup)/params$thin)
   # Results placeholders 
-  WB_ <- vector("list", nsave)
-  loglik_mat_ <- matrix(0, nrow = nsave, ncol = length(y))
-  loglik_ <- numeric(nsave)
-  sampler_params <- matrix(0, nrow = iter, ncol = 4)
-  dimnames(sampler_params) <- list(NULL, c("accept_ratio__", "stepsize__", 
-                                           constraint_name, "divergent__"))
+  model <- vector("list", nsave)
+  ll.mat <- matrix(0, nrow=nsave, ncol=length(Y))
+  chain.info <- lapply(1:3,function(i){
+    numeric(nsave)})
+  names(chain.info) <- c("accept.ratio", const.var, "divergent")
   
-  if (adapt_Eps) {
+  
+  if (adapt.eps) {
     Hbar <- 0
     #eps <- find_reasonable_epsilon(theta[1,], Minv, Misqrt, X, B, param)
-    eps <- init_stepsize(theta, Minv, Misqrt, X, B, bnn.params)
-    log_epsbar <- log(eps)
-    mu <- log(10 * eps)
+    eps <- init.stepsize(theta, Minv, Misqrt, X, B, bnn.params)
+    log.epsbar <- log(eps)
+    mu <- log(10*eps)
   }
   
   # Start of MCMC chain
-  if (verbose > 0) {
-    inform('')
-    inform(paste('Starting', params[["sampler"]], 'at', time_start <- Sys.time()))
+  if (verbose) {
+    message('')
+    message(paste('Starting', params$sampler, 'at', time.start <- Sys.time()))
   }
 
-  for (i in 1:iter) {
-    if (i == 1 && verbose == 2) {
+  for (i in 1:params$iter) {
+    if (i == 1 && verbose) {
       handlers("progress")
       handlers(global = TRUE)
-      pb <- progressor(warmup)
+      pb <- progressor(params$warmup)
     }
     
     info <- list(0, 0)
-    names(info) <- c(eval(constraint_name), "divergent__")
+    names(info) <- c(eval(const.var), "divergent")
     
-    draw <- sampling(theta, X, B, bnn.params, eps, Minv, Misqrt, constraint, info)
+    draw <- sampling(theta, X, B, bnn.params, eps, Minv, Misqrt, const, info)
     theta <- draw$theta
-    accept_prob <- draw$accept_prob
-    WB <- theta2WB(theta, bnn.params)
+    accept.prob <- draw$accept.prob
+    W <- .theta2W(theta, V)
     
     # Gibbs sampler for scales
-    bnn.params <- 
-      gibbs.update(bnn.params, 
-                   WB, 
-                   params[["prior"]],
-                   params[["sigma.prior.a"]], 
-                   params[["sigma.prior.b"]], 
-                   params[["lambda.prior.a"]], 
-                   params[["lambda.prior.b"]])
-    
-    if (i <= warmup) {
-      if (verbose == 2) pb(message = "Warming up...")
-      if (adapt_Eps) {
+    bnn.params <- .gibbs(bnn.params, W, params$prior, 
+                         params$hyperpar$a_sigma, params$hyperpar$b_sigma,
+                         params$hyperpar$a_lambda, params$hyperpar$b_lambda)
+                
+    if (i <= params$warmup) {
+      if (verbose) pb(message = "Warming up...")
+      if (adapt.eps) {
         # Dual avergaing to adapt step size
         eta <- 1 / (i + t0)
-        Hbar <- (1 - eta) * Hbar + eta * (delta - accept_prob)
-        log_eps <- mu - sqrt(i) * Hbar / gamma
+        Hbar <- (1 - eta) * Hbar + eta * (delta - accept.prob)
+        log.eps <- mu - sqrt(i) * Hbar / gamma
         eta <- i^-kappa
-        log_epsbar <- (1 - eta) * log_epsbar + eta * log_eps
-        eps <- exp(log_eps)
+        log.epsbar <- (1 - eta) * log.epsbar + eta * log.eps
+        eps <- exp(log.eps)
       } # End of step size adaptation
       
-      if (adapt_Mass) {
+      if (adapt.M) {
         # Adaptation of mass matrix
-        if (adaptation_window(window_adapter)) {
-          welford_num_samples <- welford_num_samples + 1
-          welford_delta <- theta - welford_m
-          welford_m <- welford_m + welford_delta / welford_num_samples
-          if (metric == "diag") {
-            welford_m2 <- welford_m2 + (theta - welford_m) * welford_delta
-          } else {
-            welford_m2 <- welford_m2 + tcrossprod(theta - welford_m, welford_delta)
-          }
+        if (adaptation_window(window.adapter)) {
+          wns <- wns + 1
+          wdelta <- theta - wm
+          wm <- wm + wdelta / wns
+          if (metric == "diag") wm2 <- wm2 + (theta - wm) * wdelta
+          else wm2 <- wm2 + tcrossprod(theta - wm, wdelta)
         }
         
-        if (end_adaptation_window(window_adapter)) {
-          window_adapter <- compute_next_window(window_adapter)
-          Minv <- welford_m2 / (welford_num_samples - 1)
+        if (end_adaptation_window(window.adapter)) {
+          window.adapter <- compute_next_window(window.adapter)
+          Minv <- wm2 / (wns - 1)
           if (metric == "diag")
-            Minv <- (welford_num_samples / (welford_num_samples + 5)) * Minv + 
-            1e-3 * (5 / (welford_num_samples + 5))
+            Minv <- (wns / (wns + 5)) * Minv + 1e-3 * (5 / (wns + 5))
           else
-            Minv <- (welford_num_samples / (welford_num_samples + 5)) * Minv + 
-            1e-3 * (5 / (welford_num_samples + 5)) * diag(npar)
-          
+            Minv <- (wns / (wns + 5)) * Minv + 1e-3 * (5 / (wns + 5)) * diag(npar)
           if (!is.finite(sum(Minv))) {
-            message("WARNING ", now()," Non-finite estimates in mass matrix adaptation ",
+            warning("Non-finite estimates in mass matrix adaptation ",
                     "-- reverting to unit metric.")
             Minv <- rep(1, len = npar)
           }
@@ -173,77 +147,61 @@ spqr.mcmc.train <-
           Misqrt <- if(metric == "diag") sqrt(Minv) else chol(Minv)
           # Find new reasonable eps since it can change dramatically when mass 
           # matrix updates
-          eps <- init_stepsize(theta, Minv, Misqrt, X, B, bnn.params)
+          eps <- init.stepsize(theta, Minv, Misqrt, X, B, bnn.params)
           mu  <- log(10 * eps)
           # Reset the running variance calculation
-          welford_num_samples <- 0
-          welford_m <- rep(0, len=npar)
-          if (metric == "diag")
-            welford_m2 <- rep(0, npar)
-          else
-            welford_m2 <- matrix(0, npar, npar)
+          wns <- 0
+          wm <- rep(0, len=npar)
+          if (metric == "diag") wm2 <- rep(0, npar)
+          else wm2 <- matrix(0, npar, npar)
         }
-        window_adapter$window_counter <- window_adapter$window_counter + 1
+        window.adapter$window.counter <- window.adapter$window.counter + 1
       } # End of mass matrix adaptation
-      if (i == warmup) 
-        time_warmup <- difftime(Sys.time(), time_start, units='secs')
     } else {
       # Fix stepsize after warmup
-      if (i == warmup + 1) {
-        handlers(global = FALSE)
-        if (adapt_Eps) {
-          eps <- exp(log_epsbar)
-          inform(paste0("Final step size = ", round(eps, 3),
-                        "; after ", warmup, " warmup iterations"))
-        }
-        if (verbose == 2) {
+      if (i == params$warmup + 1) {
+        if (adapt.eps) eps <- exp(log.epsbar)
+        if (verbose) {
           handlers(global = TRUE)
-          pb <- progressor(iter - warmup)
+          pb <- progressor(params$iter - params$warmup)
         }
         isave <- 1 # Initialize saving index
       }
-      if (verbose == 2) pb(message = "Sampling...")
-      if ((i - warmup) %% thin == 0) {
-        WB_[[isave]] <- WB
-        loglik_mat_[isave,] <- loglik_vec(theta, X, B, bnn.params)
-        loglik_[isave] <- mean(loglik_mat_[isave,])
+      if (verbose) pb(message = "Sampling...")
+      if ((i - params$warmup) %% params$thin == 0) {
+        model[[isave]] <- W
+        ll.mat[isave,] <- loglik_vec(theta, X, B, bnn.params)
+        
+        chain.info$accept.ratio[isave] <- accept.prob
+        chain.info[[2]][isave] <- info[[1]]
+        chain.info$divergent[isave] <- info[[2]]
         isave <- isave + 1
       }
     }
-    sampler_params[i,] <- c(accept_prob, eps, as.numeric(info))
   } # End of MCMC loop
-  suppressWarnings(waic <- waic(loglik_mat_)$estimates[3]) # Calculate WAIC
-  
-  
-  # Print some summary info of the chain
-  if (verbose > 0) {
-    handlers(global = FALSE)
-    ndiv <- sum(sampler_params[-(1:warmup), 'divergent__'])
-    if (ndiv > 0)
-      message(paste0("WARNING: There were ", ndiv, 
-                     " divergent transitions after warmup"))
-    
-    msg <- paste0("Final acceptance ratio = ", 
-                  sprintf("%.2f", mean(sampler_params[-(1:warmup), 'accept_ratio__']))) 
-    
-    if (adapt_Eps) msg <- paste0(msg,", and target = ", delta)
-    inform(msg)
-    
-    time_total <- difftime(Sys.time(), time_start, units='secs')
-    print_mcmc_timing(time_warmup, time_total)
-  }
-  output <- list(sample = WB_, loglik = loglik_, waic = waic, 
-                 diagnose = sampler_params, n.knots = params[["n.knots"]],
-                 activation = params[["activation"]], X = t(X), y = y)
-  return(output)
+  if (verbose) handlers(global = FALSE)
+  chain.info$stepsize <- eps
+  if (!adapt.eps) delta <- NA
+  chain.info$delta <- delta
+  chain.info$loglik <- ll.mat
+  time.total <- difftime(Sys.time(), time.start, units='mins')
+  if (verbose) message(paste0("Elapsed Time: ", sprintf("%.1f", time.total), ' minutes'))
+  params$control <- control
+  out <- list(model=model,
+              time=time.total,
+              chain.info=chain.info, 
+              params=params,
+              X=t(X), 
+              Y=Y)
+  return(out)
 }
 
-gibbs.update <- function(params, WB, prior, global_a, global_b, local_a, local_b) {
+.gibbs <- function(params, W, prior, a_sigma, b_sigma, a_lambda, b_lambda) {
   
   V <- params[["V"]]
   num_layers <- length(V) - 1
-  W <- WB$W
-  b <- WB$b
+  .W <- W$W
+  .b <- W$b
   if (prior == "ARD" || prior == "GSM") {
     # local scale shouldn't be touched for "GP" prior
     lambda_W <- params$lambda_W
@@ -259,42 +217,42 @@ gibbs.update <- function(params, WB, prior, global_a, global_b, local_a, local_b
       # In addition, each input is associated with a input-specific local scale
       
       # Update global scale
-      aa <- global_a + V[l+1]*(V[l]+1)/2
-      bb <- global_b + (sum((t(W[[l]])/lambda_W[[l]])^2)+sum((b[[l]]/lambda_b[l])^2))/2
+      aa <- a_sigma + V[l+1]*(V[l]+1)/2
+      bb <- b_sigma + (sum((t(.W[[l]])/lambda_W[[l]])^2)+sum((.b[[l]]/lambda_b[l])^2))/2
       sigma_b[l] <- sigma_W[l] <- 1/sqrt(rgamma(1,aa,bb))
       
       # Update local scale for weights
-      cc <- local_a + V[l+1]/2
+      cc <- a_lambda + V[l+1]/2
       # Separate local scale for each input
       for (j in 1:V[l]) {
-        dd <- local_b+sum((W[[l]][,j]/sigma_W[l])^2)/2
+        dd <- b_lambda+sum((.W[[l]][,j]/sigma_W[l])^2)/2
         lambda_W[[l]][j] <- 1/sqrt(rgamma(1,cc,dd))
       }
       # Update local scale for biases
-      ff <- local_b + sum((b[[l]]/sigma_b[l])^2)/2
+      ff <- b_lambda + sum((.b[[l]]/sigma_b[l])^2)/2
       lambda_b[l] <- 1/sqrt(rgamma(1,cc,ff))
     } else if (prior == "ARD" && l == 1) {
       # Update local scale for weights
-      cc <- global_a + V[2]/2
+      cc <- a_sigma + V[2]/2
       # Separate local scale for each input
       for (j in 1:V[1]) {
-        dd <- global_b+sum((W[[1]][,j])^2)/2
+        dd <- b_sigma+sum((.W[[1]][,j])^2)/2
         lambda_W[[1]][j] <- 1/sqrt(rgamma(1,cc,dd))
       }
       # Update local scale for biases
-      ff <- global_b + sum((b[[1]])^2)/2
+      ff <- b_sigma + sum((.b[[1]])^2)/2
       sigma_b[1] <- 1/sqrt(rgamma(1,cc,ff))
     } else {
       # Weigths and biases have block-wise variances
       
       # Update scale for weights
-      cc <- global_a + V[l+1]*V[l]/2
-      dd <- global_b/H + sum(W[[l]]^2)/2
+      cc <- a_sigma + V[l+1]*V[l]/2
+      dd <- b_sigma/H + sum(.W[[l]]^2)/2
       sigma_W[l] <- 1/sqrt(rgamma(1,cc,dd))
       
       # Update scale for biases
-      ee <- global_a + V[l+1]/2
-      ff <- global_b + sum((b[[l]])^2)/2
+      ee <- a_sigma + V[l+1]/2
+      ff <- b_sigma + sum((.b[[l]])^2)/2
       sigma_b[l] <- 1/sqrt(rgamma(1,ee,ff))
     }
   }
@@ -305,4 +263,80 @@ gibbs.update <- function(params, WB, prior, global_a, global_b, local_a, local_b
   params$sigma_W <- sigma_W
   params$sigma_b <- sigma_b
   return(params)
+}
+
+.coefs <- function(W, X, activation = "tanh") {
+  .W <- W$W
+  .b <- W$b
+  n.layers <- length(W)
+  A <- X
+  for (l in 1:n.layers) {
+    A <- .W[[l]]%*%A + .b[[l]]
+    if (l < n.layers) {
+      if (activation == "tanh")
+        A <- base::tanh(A)
+      else
+        A <- pmax(A,0)
+    }
+  }
+  enn <- exp(A)
+  p <- sweep(enn, 2, colSums(enn), '/')
+  return(t(p))
+}
+
+## Update the control list
+.update.control <- function(control) {
+  default <- list(
+    gamma = 0.05,
+    delta = 0.9,
+    kappa = 0.75,
+    t0 = 10,
+    init.buffer = 75,
+    term.buffer = 50,
+    base.window = 25,
+    stepsize = NULL,
+    metric = "diag",
+    max.treedepth = 6,
+    int.time = 0.3
+  )
+  if (!is.null(control)) {
+    for (i in names(control))
+      default[[i]] <- control[[i]]
+  }
+  invisible(default)
+}
+
+## Initialize network using xavier's uniform rule
+.init.W <- function(V) {
+  
+  n.layers <- length(V) - 1
+  theta <- {}
+  for (l in 1:n.layers) {
+    W <- sqrt(6)/sqrt(V[l]+1+V[l+1])*runif(V[l]*V[l+1],-1,1)
+    b <- sqrt(6)/sqrt(V[l]+1+V[l+1])*runif(V[l+1],-1,1)
+    theta <- c(theta, c(W,b))
+  }
+  return(theta)
+}
+
+## Extract posterior samples of weights and bias
+.theta2W <- function(theta, V) {
+
+  n.layers <- length(V) - 1
+  
+  .W <- vector("list", n.layers)
+  .b <- vector("list", n.layers)
+  
+  end <- 0
+  for (l in 1:n.layers) {
+    start <- end + 1
+    end <- start + V[l]*V[l+1] - 1
+    .W[[l]] <- theta[start:end]
+    dim(.W[[l]]) <- c(V[l+1],V[l])
+    start <- end + 1
+    end <- start + V[l+1] - 1
+    .b[[l]] <- theta[start:end]
+  }
+  
+  return(list(W=.W, b=.b))
 }

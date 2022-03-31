@@ -1,103 +1,124 @@
-source("spqr.R")
+source("SPQR.R")
 
-# Function to generate simulated data
+# Simulation
+# Strong (X1,X2) interaction; X3 has no effect
+
+# RV for the simulation design
 rYgivenX <- function(n,p){
   X     <- matrix(runif(n*p),n,p)
-  X[,1] <- 1
-  m     <- 1/(1+exp(-1+5*X[,2]*X[,3]))
+  m     <- 1/(1+exp(-1+5*X[,1]*X[,2]))
   Y     <- rbeta(n,10*m,10*(1-m))
   out   <- list(Y=Y,X=X)
   return(out)}
 
 # PDF for the simulation design
 dYgivenX <- function(y,X){
-  m   <- 1/(1+exp(-1+5*X[2]*X[3]))
+  m   <- 1/(1+exp(-1+5*X[1]*X[2]))
   out <- dbeta(y,10*m,10*(1-m))
   return(out)}
 
 # QF for the simulation design
 qYgivenX <- function(tau,X){
-  m   <- 1/(1+exp(-1+5*X[2]*X[3]))
+  m   <- 1/(1+exp(-1+5*X[1]*X[2]))
   out <- qbeta(tau,10*m,10*(1-m))
   return(out)}
 
 set.seed(919)
 n   <- 1000   # Number of observations
-p   <- 5      # Number of covariates
+p   <- 3      # Number of covariates
 dat <- rYgivenX(n,p)
 X   <- dat$X
 Y   <- dat$Y
 
-n.knots <- 12
-n.hidden <- 10 # can be a vector for deeper networks
-activation <- "tanh" # "relu" also available
-
-
 # not all parameters need to be specified, see utils.R for default values
 adam.params <- list(
-  lr = 0.03, # learning rate
+  method = "MLE",
+  n.knots = 12,
+  n.hidden = 10,
+  activation = "tanh",
+  lr = 0.008, # learning rate
   dropout = c(0,0), # a tuple with first element indicating dropout prob for input layer
                     # and second element for common dropout prob for hidden layers
   batchnorm = F,
   batch.size = 256,
-  epochs = 200,
+  epochs = 500,
   early.stopping.epochs = 10, # early stopping number
-  model = NULL, # user supported torch model
-  save.path = file.path(getwd(),"spqr_model"), # path to save the best torch model during validation
-  save.name = "spqr.model.pt" # file to save the ...
+  save.path = file.path(getwd(),"SPQR_model"), # path to save the best torch model during validation
+  save.name = "SPQR.model.pt" # file to save the ...
 )
 
 # using adam to obtain mle estimate
-mle.fit <- spqr.train(method="MLE", params=adam.params, X=X, y=Y, 
-                      n.hidden=n.hidden, n.knots=n.knots, activation=activation)
+mle.fit <- SPQR(params=adam.params, X=X, Y=Y)
+# obtain summary of fitted model
+mle.summary <- summary(mle.fit)
+mle.summary # directly calling mle.fit will give same result
+# print summary info and show the NN structure
+print(mle.summary, showModel=T)
+# Do the previous two-steps together
+print(mle.fit, showModel=T)
 
 # Calculate K-fold CV error
-cv.out <- spqr.cv(method="MLE", params=adam.params, X=X, y=Y, n.hidden=n.hidden, 
-                  n.knots=n.knots, activation=activation, nfold=5)
+cv.out <- cv.SPQR(params=adam.params, X=X, Y=Y, nfold=5)
 
 # alternatively the user can use pre-computed folds
 # this can be wrapped in a gridsearch skeleton for parameter selection purpose
 if (FALSE) {
-  folds <- spqr.createFolds(Y, nfold=5)
+  folds <- SPQR.createFolds(Y, nfold=5)
   lr.grid <- exp(-5:-1)
   result <- do.call('rbind',lapply(lr.grid, FUN=function(lr) {
     adam.params$lr <- lr
-    cv.out <- spqr.cv(method="MLE", params=adam.params, X=X, y=Y, n.hidden=n.hidden, 
+    cv.out <- cv.SPQR(method="MLE", params=adam.params, X=X, Y=Y, n.hidden=n.hidden, 
                       n.knots=n.knots, activation=activation, folds=folds)
-    c(lr, cv.out$cv_loss)
+    c(lr, cv.out$cve)
   }))
   colnames(result) <- c("lr","cve")
 }
 
-
-adam.params$lr <- 0.008
 # using adam to obtain map estimate
-map.fit <- spqr.train(method="MAP", prior="GSM", params=adam.params, X=X, y=Y, 
-                      n.hidden=n.hidden, n.knots=n.knots, activation=activation)
+# MAP can be more sensitive to learning rate
+adam.params$method <- "MAP"
+adam.params$prior <- "ARD"
+map.fit <- SPQR(params=adam.params, X=X, Y=Y)
+# obtain summary of fitted model
+map.summary <- summary(map.fit)
+# print summary info
+print(map.summary, showModel=T)
+# Do the previous two-steps together
+print(map.fit, showModel=T)
 
 mcmc.params <- list(
+  method="Bayes",
+  n.knots = 12,
+  n.hidden = 10,
+  activation = "tanh",
   sampler = "NUTS", # "HMC" also available
   prior = "ARD", # "GP" and "GSM" also available
-  control = list(adapt_delta = 0.9), # HMC control parameters
   iter = 1000, # total number of iterations
   warmup = 250, # warmup iters for stepsize and mass matrix adaptation
   thin = 5 # period for saving posterior samples
 )
 
 # using mcmc to obtain bayes estimate
-bayes.fit <- spqr.train(method="Bayes", params=mcmc.params, X=X, y=Y, 
-                        n.hidden=n.hidden, n.knots=n.knots,
-                        activation=activation, verbose=2)
+bayes.fit <- SPQR(params=mcmc.params, X=X, Y=Y)
+# obtain summary of fitted model
+bayes.summary <- summary(bayes.fit)
+# print summary info
+print(bayes.summary, showModel=T)
+# Do the previous two-steps together
+print(bayes.fit, showModel=T)
 
-# plotting estimates
+# prediction based on fitted model
 X_test <- X[1:9,]
-yyy <- seq(0,1,length.out=101)
+# PDF
+# not specifying `Y` means we want to full curve
+# default is seq(0,1,length.out=501)
+pdf.mle <- predict(mle.fit, X=X_test, type="PDF")
+pdf.map <- predict(map.fit, X=X_test, type="PDF")
+pdf.bayes <- predict(bayes.fit, X=X_test, type="PDF")
+# the output is a named array
+names(dimnames(pdf.bayes))
 
-# pdf point estimates
-pdf.mle <- spqr.predict(mle.fit, X_test, yyy, result="pdf")
-pdf.map <- spqr.predict(map.fit, X_test, yyy, result="pdf")
-pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="pdf")
-
+yyy <- seq(0,1,length.out=501)
 par(mfrow=c(3,3))
 for(i in 1:9){
   pdf0 <- dYgivenX(yyy,X_test[i,]) # True
@@ -114,8 +135,15 @@ for(i in 1:9){
   }
 }
 
+# the built-in plotting function plots PDF/CDF/QF curve for a single X
+plot(mle.fit, X=X_test[1,], type="PDF")
+plot(map.fit, X=X_test[1,], type="PDF")
+plot(bayes.fit, X=X_test[1,], type="PDF")
+
 # pdf points estimates and credible intervals
-pdf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="pdf", ci.level=0.95)
+pdf.bayes <- predict(bayes.fit, X_test, type="PDF", ci.level=0.95)
+names(dimnames(pdf.bayes))
+
 par(mfrow=c(3,3))
 for(i in 1:9){
   pdf0 <- dYgivenX(yyy,X_test[i,]) # True
@@ -132,11 +160,18 @@ for(i in 1:9){
   }
 }
 
+# using built-in plotting function
+plot(bayes.fit, X=X_test[1,], type="PDF", ci.level=0.95)
+# instead of credible bands, plot all posterior samples
+plot(bayes.fit, X=X_test[1,], type="PDF", getAll=TRUE)
+
 # quantile function
 tau <- seq(0.05,0.95,0.05)
-qf.mle <- spqr.predict(mle.fit, X_test, yyy, result="qf", tau=tau)
-qf.map <- spqr.predict(map.fit, X_test, yyy, result="qf", tau=tau)
-qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="qf", tau=tau)
+qf.mle <- predict(mle.fit, X_test, type="QF", tau=tau)
+qf.map <- predict(map.fit, X_test, type="QF", tau=tau)
+qf.bayes <- predict(bayes.fit, X_test, type="QF", tau=tau)
+names(dimnames(qf.bayes))
+
 par(mfrow=c(3,3))
 for(i in 1:9){
   qf0 <- qYgivenX(tau,X_test[i,]) # True
@@ -154,7 +189,7 @@ for(i in 1:9){
 }
 
 # qf points estimates and credible intervals
-qf.bayes <- spqr.predict(bayes.fit, X_test, yyy, result="qf", tau=tau, ci.level=0.95)
+qf.bayes <- predict.SPQR(bayes.fit, X_test, type="QF", tau=tau, ci.level=0.95)
 par(mfrow=c(3,3))
 for(i in 1:9){
   qf0 <- qYgivenX(tau,X_test[i,]) # True
@@ -171,23 +206,23 @@ for(i in 1:9){
   }
 }
 
-# Goodness-of-fit
-cdf1 <- cdf2 <- cdf3 <- {}
-for (i in 1:length(Y)) {
-  cdf1[i] <- spqr.predict(mle.fit, t(X[i,]), Y[i], result="cdf")
-  cdf2[i] <- spqr.predict(map.fit, t(X[i,]), Y[i], result="cdf")
-  cdf3[i] <- spqr.predict(bayes.fit, t(X[i,]), Y[i], result="cdf")
-}
-par(mfrow=c(1,3))
-qqplot(cdf1, runif(n),xlab="CDF",ylab="U(0,1)",main="MLE")
-abline(0,1,col=2,lwd=2)
-qqplot(cdf2, runif(n),xlab="CDF",ylab="U(0,1)",main="MAP")
-abline(0,1,col=2,lwd=2)
-qqplot(cdf3, runif(n),xlab="CDF",ylab="U(0,1)",main="Bayes")
-abline(0,1,col=2,lwd=2)
+# using built-in plotting function
+plot(bayes.fit, X=X_test[1,], type="QF", ci.level=0.95)
+# instead of credible bands, plot all posterior samples
+plot(bayes.fit, X=X_test[1,], type="QF", getAll=TRUE)
+
+# Goodness-of-fit based on inverse transform method
+qqCheck(mle.fit)
+qqCheck(map.fit)
+qqCheck(bayes.fit)
+# same but with credible bands
+qqCheck(bayes.fit, ci.level=0.95)
+# with all posterior samples
+qqCheck(bayes.fit, getAll=TRUE)
 
 # Sensitivity analysis
 tau <- c(0.25,0.5,0.75)
+# True generating function
 pred.fun <- function(X, tau) {
   out <- matrix(nrow=nrow(X), ncol=length(tau))
   for (i in 1:nrow(X)) {
@@ -198,53 +233,61 @@ pred.fun <- function(X, tau) {
 
 # Main effect for x2, x3, x4
 par(mfrow=c(3,3))
-for (j in c(2,3,4)) {
-  ale.mle <- spqr.ale(mle.fit, tau, J=j)
-  ale.map <- spqr.ale(map.fit, tau, J=j)
-  ale.bayes <- spqr.ale(bayes.fit, tau, J=j)
-  ale.ans <- spqr.ale(list(X=X), tau, J=j, pred.fun=pred.fun)
+for (j in 1:3) {
+  ale.mle <- QALE(mle.fit, var.index=j, tau=tau)
+  ale.map <- QALE(map.fit, var.index=j, tau=tau)
+  ale.bayes <- QALE(bayes.fit, var.index=j, tau=tau)
+  ale.ans <- QALE(list(X=X), var.index=j, tau=tau, pred.fun=pred.fun)
   
   for (i in 1:length(tau)) {
-    plot(ale.ans$x.values, ale.ans$f.values[,i], type="l", xlab=paste0("x.",j), ylab="ALE", col=1)
-    lines(ale.mle$x.values, ale.mle$f.values[,i], col=2)
-    lines(ale.map$x.values, ale.map$f.values[,i], col=3)
-    lines(ale.bayes$x.values, ale.bayes$f.values[,i], col=4)
+    plot(ale.ans$x, ale.ans$ALE[,i], type="l", xlab=parse(text=paste0("X[",j,"]")), ylab="ALE", col=1)
+    lines(ale.mle$x, ale.mle$ALE[,i], col=2)
+    lines(ale.map$x, ale.map$ALE[,i], col=3)
+    lines(ale.bayes$x, ale.bayes$ALE[,i], col=4)
     if(i==1){
       legend("topright",c("True","MLE","MAP","Bayes"),lty=1,col=1:4,bty="n")
     }
   }
 }
 
-# Interaction effect for (x2,x3)
-par(mfrow=c(2,2))
-ale.mle <- spqr.ale(mle.fit, tau, J=c(2,3))
-ale.map <- spqr.ale(map.fit, tau, J=c(2,3))
-ale.bayes <- spqr.ale(bayes.fit, tau, J=c(2,3))
-ale.ans <- spqr.ale(list(X=X), tau, J=c(2,3), pred.fun=pred.fun)
+# using built-in plotQALE
+plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1))
+# all lines in one plot, easier comparison
+plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1), singlePlot=TRUE)
+# with credible bands
+# SLOW!!
+plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1), ci.level=0.95)
+# with all posterior samples
+# SLOW!!
+plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1), getAll=TRUE)
 
-image(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1],xlab = "x.2",ylab = "x.3",main = "True")
-contour(ale.ans$x.values[[1]], ale.ans$x.values[[2]], ale.ans$f.values[,,1], add=TRUE, drawlabels=TRUE)
-image(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "MLE")
-contour(ale.mle$x.values[[1]], ale.mle$x.values[[2]], ale.mle$f.values[,,1], add=TRUE, drawlabels=TRUE)
-image(ale.map$x.values[[1]], ale.map$x.values[[2]], ale.map$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "MAP")
-contour(ale.map$x.values[[1]], ale.map$x.values[[2]], ale.map$f.values[,,1], add=TRUE, drawlabels=TRUE)
-image(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], xlab = "x.2",ylab = "x.3",main = "Bayes")
-contour(ale.bayes$x.values[[1]], ale.bayes$x.values[[2]], ale.bayes$f.values[,,1], add=TRUE, drawlabels=TRUE)
+
+# Interaction effect for (X1,X2)
+par(mfrow=c(2,2))
+ale.mle <- QALE(mle.fit, var.index=c(1,2), tau=tau)
+ale.map <- QALE(map.fit, var.index=c(1,2), tau=tau)
+ale.bayes <- QALE(bayes.fit, var.index=c(1,2), tau=tau)
+ale.ans <- QALE(list(X=X), var.index=c(1,2), tau=tau, pred.fun=pred.fun)
+
+image(ale.ans$x[[1]], ale.ans$x[[2]], ale.ans$ALE[,,1],xlab = parse(text="X[2]"),ylab = parse(text="X[3]"),main = "True")
+contour(ale.ans$x[[1]], ale.ans$x[[2]], ale.ans$ALE[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.mle$x[[1]], ale.mle$x[[2]], ale.mle$ALE[,,1], xlab = parse(text="X[2]"),ylab = parse(text="X[3]"),main = "MLE")
+contour(ale.mle$x[[1]], ale.mle$x[[2]], ale.mle$ALE[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.map$x[[1]], ale.map$x[[2]], ale.map$ALE[,,1], xlab = parse(text="X[2]"),ylab = parse(text="X[3]"),main = "MAP")
+contour(ale.map$x[[1]], ale.map$x[[2]], ale.map$ALE[,,1], add=TRUE, drawlabels=TRUE)
+image(ale.bayes$x[[1]], ale.bayes$x[[2]], ale.bayes$ALE[,,1], xlab = parse(text="X[2]"),ylab = parse(text="X[3]"),main = "Bayes")
+contour(ale.bayes$x[[1]], ale.bayes$x[[2]], ale.bayes$ALE[,,1], add=TRUE, drawlabels=TRUE)
 
 par(mfrow=c(1,1))
 
+# using built-in plotQALE
+plotQALE(bayes.fit, var.index=c(1,2), tau=seq(0.1,0.9,0.1))
+plotQALE(bayes.fit, var.index=c(2,3), tau=seq(0.1,0.9,0.1))
 
-# Generate ALE plots directly from fitted models
-# Main effect across tau
-autoplot(bayes.fit, type="ALE", var.index=3, tau=c(0.2,0.4,0.6,0.8))
-# Main effect across tau with credible intervals
-# SLOW!!
-autoplot(bayes.fit, type="ALE", var.index=3, tau=c(0.2,0.4,0.6,0.8), ci.level=0.95)
-# Interaction effect across tau
-autoplot(bayes.fit, type="ALE", var.index=c(2,3), tau=c(0.2,0.4,0.6,0.8))
-# Variable importance for across tau
-autoplot(bayes.fit, type="VI", var.index=c(2,3,4,5), tau=c(0.2,0.4,0.6,0.8))
-# Variable importance for across tau with credible intervals
+# Variable importance across tau
+# not specifing var.index means to consider all features
+plotQVI(bayes.fit, tau=seq(0.1,0.9,0.1))
+# Variable importance across tau with credible intervals
 # VERY SLOW!!
-autoplot(bayes.fit, type="VI", var.index=c(2,3,4,5), tau=c(0.2,0.4,0.6,0.8), ci.level=0.95)
+plotQVI(bayes.fit, tau=seq(0.1,0.9,0.1), ci.level=0.95)
 

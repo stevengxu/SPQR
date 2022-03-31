@@ -117,7 +117,7 @@ double logprob(
     }
   }
   loglik += sum(log(sum(B % A, 0)));
-
+  
   return logprior + loglik;
 }
 

@@ -222,7 +222,7 @@ class advanced_nuts {
       this->z = z_sample;
       Rcpp::List out = 
         Rcpp::List::create(Rcpp::Named("theta") = this->z.q,
-                           Rcpp::Named("accept_prob") = accept_prob);
+                           Rcpp::Named("accept.prob") = accept_prob);
       return out;
     }
     
@@ -362,9 +362,9 @@ Rcpp::List advanced_nuts_diag(
   
   Rcpp::List res = sampler.transition(epsilon, Minv, Misqrt);
   
-  info["treedepth__"] = sampler.get_depth();
+  info["treedepth"] = sampler.get_depth();
   if (sampler.is_divergent())
-    info["divergent__"] = 1;
+    info["divergent"] = 1;
   
   return res;
 }
@@ -387,9 +387,9 @@ Rcpp::List advanced_nuts_dense(
   
   Rcpp::List res = sampler.transition(epsilon, Minv, Misqrt);
   
-  info["treedepth__"] = sampler.get_depth();
+  info["treedepth"] = sampler.get_depth();
   if (sampler.is_divergent())
-    info["divergent__"] = 1;
+    info["divergent"] = 1;
   
   return res;
 }

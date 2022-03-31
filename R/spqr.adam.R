@@ -1,7 +1,6 @@
-spqr.adam.train <- 
-  function(params, X, y, seed = NULL, verbose = TRUE) {
-    
-  V <- c(ncol(X),params[["n.hidden"]],params[["n.knots"]])
+SPQR.adam <- function(params, X, Y, verbose = TRUE) {
+  
+  V <- c(ncol(X), params$n.hidden, params$n.knots)
   # Define dataset and dataloader
   ds <- dataset(
     # modified from https://torch.mlverse.org/start/custom_dataset/  
@@ -9,7 +8,7 @@ spqr.adam.train <-
     # I'm extracting the index variable since I need it for my custom loss function
     initialize = function(indices) {
       self$x <- torch_tensor(X[indices,,drop = FALSE])
-      self$y <- torch_tensor(y[indices])
+      self$y <- torch_tensor(Y[indices])
     },
     
     .getitem = function(i) {
@@ -21,57 +20,54 @@ spqr.adam.train <-
     }
   )
   N <- nrow(X)
-  valid_indices <- sample(1:N, size = floor(params[["validation.pct"]]*N))
+  valid_indices <- sample(1:N, size = floor(N*params$valid.pct))
   train_indices <- setdiff(1:N, valid_indices)
   
   train_ds <- ds(train_indices)
-  train_dl <- train_ds %>% dataloader(batch_size = params[["batch.size"]], 
-                                      shuffle = TRUE)
+  train_dl <- train_ds %>% dataloader(batch_size = params$batch.size, shuffle = TRUE)
   valid_ds <- ds(valid_indices)
-  valid_dl <- valid_ds %>% dataloader(batch_size = params[["batch.size"]], 
-                                      shuffle = FALSE)
+  valid_dl <- valid_ds %>% dataloader(batch_size = params$batch.size, shuffle = FALSE)
   
-  if (is.null(params[["model"]])) {
-    # Use the default template
-    if (params[["method"]] == "MAP") {
-      model <- nn_spqr_MAP(V, # MAP estimation using one of the three priors
-                           params[["dropout"]], 
-                           params[["batchnorm"]], 
-                           params[["activation"]], 
-                           params[["prior"]],
-                           params[["sigma.prior.a"]], 
-                           params[["sigma.prior.b"]], 
-                           params[["lambda.prior.a"]], 
-                           params[["lambda.prior.b"]])
-    } else {
-      model <- nn_spqr_MLE(V, # MLE estimation
-                           params[["dropout"]], 
-                           params[["batchnorm"]], 
-                           params[["activation"]])
-    }
+  # Use the default template
+  if (params$method == "MAP") {
+    model <- nn_SPQR_MAP(V, # MAP estimation using one of the three priors
+                         params$dropout, 
+                         params$batchnorm, 
+                         params$activation, 
+                         params$prior,
+                         params$hyperpar$a_sigma,
+                         params$hyperpar$b_sigma,
+                         params$hyperpar$a_lambda,
+                         params$hyperpar$b_lambda)
+  } else {
+    model <- nn_SPQR_MLE(V, # MLE estimation
+                         params$dropout, 
+                         params$batchnorm, 
+                         params$activation)
   }
   
   # Computing the basis and converting it to a tensor beforehand to save
   # computational time; this is used every iteration for computing loss
-  Btotal <- sp.basis(y, params[["n.knots"]])
-  Btrain <- torch_tensor(Btotal[,train_indices])
-  Bvalid <- torch_tensor(Btotal[,valid_indices])
+  Btotal <- .basis(Y, params$n.knots)
+  Btrain <- torch_tensor(Btotal[train_indices,])
+  Bvalid <- torch_tensor(Btotal[valid_indices,])
   
   # Define custom loss function
-  nloglik_loss = function(indices, basis, coefs) {
-    loglik <- basis[,indices]$mul(coefs$t())$sum(1)$log()$sum()
+  nll.loss = function(indices, basis, coefs) {
+    loglik <- basis[indices,]$mul(coefs)$sum(2)$log()$sum()
     return(-loglik)
   }
   
-  optimizer <- optim_adam(model$parameters, lr = params[["lr"]])
+  optimizer <- optim_adam(model$parameters, lr = params$lr)
   counter <- 0
-  if(!dir.exists(params[["save.path"]]))
-    dir.create(params[["save.path"]])
+  if(!dir.exists(params$save.path))
+    dir.create(params$save.path)
   
-  save_name <- file.path(params[["save.path"]], params[["save.name"]])
+  save_name <- file.path(params$save.path, params$save.name)
   last_valid_loss <- Inf
   last_train_loss <- Inf
-  for (epoch in 1:params[["epochs"]]) {
+  time.start <- Sys.time()
+  for (epoch in 1:params$epochs) {
     
     model$train()
     train_losses <- c()  
@@ -81,7 +77,7 @@ spqr.adam.train <-
       optimizer$zero_grad()
       result <- model(b$x) 
       indices <- b$index
-      nloglik <- nloglik_loss(indices=indices, basis=Btrain, coefs=result$output)
+      nloglik <- nll.loss(indices=indices, basis=Btrain, coefs=result$output)
       loss <- nloglik - result$logprior
       
       loss$backward()
@@ -98,7 +94,7 @@ spqr.adam.train <-
       
       result <- model(b$x)
       indices <- b$index
-      nloglik <- nloglik_loss(indices=indices, basis=Bvalid, coefs=result$output)
+      nloglik <- nll.loss(indices=indices, basis=Bvalid, coefs=result$output)
       loss <- nloglik - result$logprior
       
       valid_losses <- c(valid_losses, loss$item())
@@ -107,12 +103,12 @@ spqr.adam.train <-
     train_loss <- mean(train_losses)
     valid_loss <- mean(valid_losses)
     if (verbose) {
-      if (epoch==1 || epoch%%params[['print.every.epochs']]==0) {
+      if (epoch == 1 || epoch %% params$print.every.epochs == 0) {
         cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch, 
                     train_loss, valid_loss))
       }
     }
-    if (!is.null(params[["early.stopping.epochs"]])) {
+    if (!is.null(params$early.stopping.epochs)) {
       if (valid_loss < (last_valid_loss - 0.01)) {
         torch_save(model, save_name)
         last_valid_loss <- valid_loss
@@ -120,7 +116,7 @@ spqr.adam.train <-
         counter <- 0
       } else {
         counter <- counter + 1
-        if (counter >= params[["early.stopping.epochs"]]) {
+        if (counter >= params$early.stopping.epochs) {
           if (verbose) {
             cat(sprintf("Stopping... Best epoch: %d\n", epoch))
             cat(sprintf("Final loss: training: %3f, validation: %3f\n\n", 
@@ -134,24 +130,29 @@ spqr.adam.train <-
       last_train_loss <- train_loss
     }
   }
-  
-  best_model <- torch_load(save_name)
-  out <- list(model=best_model, loglik.train= -last_train_loss, 
-              loglik.eval= -last_valid_loss, X = X, y = y, n.knots=n.knots)
+  time.total <- difftime(Sys.time(), time.start, units='mins')
+  # load best model
+  best.model <- torch_load(save_name)
+  out <- list(model=best.model, 
+              loss=list(train = last_train_loss,
+                        validation = last_valid_loss),
+              time=time.total,
+              params=params,
+              X=X, 
+              Y=Y)
   return(out)
 }
 
 
-spqr.adam.cv <- 
-  function(params, X, y, folds, verbose) {
+cv.SPQR.adam <- function(params, X, Y, folds, verbose) {
     
   K <- length(folds)
-  V <- c(ncol(X),params[["n.hidden"]],params[["n.knots"]])
+  V <- c(ncol(X),params$n.hidden,params$n.knots)
   # Define dataset and dataloader
   ds <- dataset(
     initialize = function(indices) {
       self$x <- torch_tensor(X[indices,,drop = FALSE])
-      self$y <- torch_tensor(y[indices])
+      self$y <- torch_tensor(Y[indices])
     },
     
     .getitem = function(i) {
@@ -165,10 +166,10 @@ spqr.adam.cv <-
   N <- nrow(X)
   # Computing the basis and converting it to a tensor beforehand to save
   # computational time; this is used every iteration for computing loss
-  Btotal <- sp.basis(y, params[["n.knots"]])
+  Btotal <- .basis(Y, params$n.knots)
   # Define custom loss function
-  nloglik_loss = function(indices, basis, coefs) {
-    loglik <- basis[,indices]$mul(coefs$t())$sum(1)$log()$sum()
+  nll.loss = function(indices, basis, coefs) {
+    loglik <- basis[indices,]$mul(coefs)$sum(2)$log()$sum()
     return(-loglik)
   }
   cv_losses <- numeric(K)
@@ -176,34 +177,30 @@ spqr.adam.cv <-
     valid_indices <- folds[[k]]
     train_indices <- unlist(folds[-k])
     train_ds <- ds(train_indices)
-    train_dl <- train_ds %>% dataloader(batch_size = params[["batch.size"]], 
-                                        shuffle = TRUE)
+    train_dl <- train_ds %>% dataloader(batch_size = params$batch.size, shuffle = TRUE)
     valid_ds <- ds(valid_indices)
-    valid_dl <- valid_ds %>% dataloader(batch_size = params[["batch.size"]], 
-                                        shuffle = FALSE)
-    if (is.null(params[["model"]])) {
-      # Use the default template
-      if (params[["method"]] == "MAP") {
-        model <- nn_spqr_MAP(V, # MAP estimation using one of the three priors
-                             params[["dropout"]], 
-                             params[["batchnorm"]], 
-                             params[["activation"]], 
-                             params[["prior"]],
-                             params[["sigma.prior.a"]], 
-                             params[["sigma.prior.b"]], 
-                             params[["lambda.prior.a"]], 
-                             params[["lambda.prior.b"]])
-      } else {
-        model <- nn_spqr_MLE(V, # MLE estimation
-                             params[["dropout"]], 
-                             params[["batchnorm"]], 
-                             params[["activation"]])
-      }
+    valid_dl <- valid_ds %>% dataloader(batch_size = params$batch.size, shuffle = FALSE)
+    if (params$method == "MAP") {
+      model <- nn_SPQR_MAP(V, # MAP estimation using one of the three priors
+                           params$dropout, 
+                           params$batchnorm, 
+                           params$activation, 
+                           params$prior,
+                           params$hyperpar$a_sigma,
+                           params$hyperpar$b_sigma,
+                           params$hyperpar$a_lambda,
+                           params$hyperpar$b_lambda)
+    } else {
+      model <- nn_SPQR_MLE(V, # MLE estimation
+                           params$dropout, 
+                           params$batchnorm, 
+                           params$activation)
     }
-    Btrain <- torch_tensor(Btotal[,train_indices])
-    Bvalid <- torch_tensor(Btotal[,valid_indices])
     
-    optimizer <- optim_adam(model$parameters, lr = params[["lr"]])
+    Btrain <- torch_tensor(Btotal[train_indices,])
+    Bvalid <- torch_tensor(Btotal[valid_indices,])
+    
+    optimizer <- optim_adam(model$parameters, lr = params$lr)
     counter <- 0
     
     if (verbose) {
@@ -212,7 +209,7 @@ spqr.adam.cv <-
     
     last_valid_loss <- Inf
     last_train_loss <- Inf
-    for (epoch in 1:params[["epochs"]]) {
+    for (epoch in 1:params$epochs) {
       
       model$train()
       train_losses <- c()  
@@ -222,7 +219,7 @@ spqr.adam.cv <-
         optimizer$zero_grad()
         result <- model(b$x) 
         indices <- b$index
-        nloglik <- nloglik_loss(indices=indices, basis=Btrain, coefs=result$output)
+        nloglik <- nll.loss(indices=indices, basis=Btrain, coefs=result$output)
         loss <- nloglik - result$logprior
         
         loss$backward()
@@ -239,7 +236,7 @@ spqr.adam.cv <-
         
         result <- model(b$x)
         indices <- b$index
-        nloglik <- nloglik_loss(indices=indices, basis=Bvalid, coefs=result$output)
+        nloglik <- nll.loss(indices=indices, basis=Bvalid, coefs=result$output)
         loss <- nloglik - result$logprior
         
         valid_losses <- c(valid_losses, loss$item())
@@ -248,19 +245,19 @@ spqr.adam.cv <-
       train_loss <- mean(train_losses)
       valid_loss <- mean(valid_losses)
       if (verbose) {
-        if (epoch==1 || epoch%%params[['print.every.epochs']]==0) {
+        if (epoch == 1 || epoch %% params$print.every.epochs == 0) {
           cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch, 
                       train_loss, valid_loss))
         }
       }
-      if (!is.null(params[["early.stopping.epochs"]])) {
+      if (!is.null(params$early.stopping.epochs)) {
         if (valid_loss < (last_valid_loss - 0.01)) {
           last_valid_loss <- valid_loss
           last_train_loss <- train_loss
           counter <- 0
         } else {
           counter <- counter + 1
-          if (counter >= params[["early.stopping.epochs"]]) {
+          if (counter >= params$early.stopping.epochs) {
             if (verbose) {
               cat(sprintf("Stopping... Best epoch: %d\n", epoch))
               cat(sprintf("Final loss: training: %3f, validation: %3f\n\n", 
@@ -276,13 +273,13 @@ spqr.adam.cv <-
     }
     cv_losses[k] <- last_valid_loss
   }
-  out <- list(params=params, cv_loss=mean(cv_losses), folds=folds)
-  class(out) <- "spqr.adam.cv"
+  out <- list(params=params, cve=mean(cv_losses), folds=folds)
+  class(out) <- "SPQR.adam.cv"
   invisible(out)
 }
 
-nn_spqr_MLE <- nn_module(
-  classname = "nn_spqr",
+nn_SPQR_MLE <- nn_module(
+  classname = "nn_SPQR",
   initialize = function(V, dropout, batchnorm, activation) {
     
     self$act <- eval(parse(text = paste0("nnf_", activation)))
@@ -306,7 +303,7 @@ nn_spqr_MLE <- nn_module(
     
     # hidden-to-hidden block
     if (self$layernum > 2) {
-      for (l in 2:(self$layers-1)) {
+      for (l in 2:(self$layernum-1)) {
         X <- self$fc[[l]](X)
         if (self$batchnorm)
           X <- nn_batch_norm1d(ncol(X))(X)
@@ -341,10 +338,10 @@ nn_Linear <- nn_module(
   }
 )
 
-nn_spqr_MAP <- nn_module(
-  classname = "nn_spqr",
+nn_SPQR_MAP <- nn_module(
+  classname = "nn_SPQR",
   initialize = function(V, dropout, batchnorm, activation, prior_class, 
-                        tau_prior_a, tau_prior_b, kappa_prior_a, kappa_prior_b) {
+                        a_tau, b_tau, a_kappa, b_kappa) {
     
     self$act <- eval(parse(text = paste0("nnf_", activation)))
     self$batchnorm <- batchnorm
@@ -355,13 +352,13 @@ nn_spqr_MAP <- nn_module(
     # Input-to-hidden Layer
     if (prior_class == "GP") {
       self$fc[[1]] <- 
-        nn_BayesLinear_GP(V[1], V[2], tau_prior_a, tau_prior_b, FALSE)
+        nn_BayesLinear_GP(V[1], V[2], a_tau, b_tau, FALSE)
     } else if (prior_class == "ARD") {
       self$fc[[1]] <- 
-        nn_BayesLinear_ARD(V[1], V[2], tau_prior_a, tau_prior_b)
+        nn_BayesLinear_ARD(V[1], V[2], a_tau, b_tau)
     } else {
       self$fc[[1]] <- 
-        nn_BayesLinear_GSM(V[1], V[2], tau_prior_a, tau_prior_b, kappa_prior_a, kappa_prior_b)
+        nn_BayesLinear_GSM(V[1], V[2], a_tau, b_tau, a_kappa, b_kappa)
     }
     
     # Hidden-to-hidden and hidden-to-output Layers
@@ -370,10 +367,10 @@ nn_spqr_MAP <- nn_module(
       for (l in 2:self$layernum) {
         if (prior_class == "GSM") {
           self$fc[[l]] <- 
-            nn_BayesLinear_GSM(V[l], V[l+1], tau_prior_a, tau_prior_b, kappa_prior_a, kappa_prior_b)
+            nn_BayesLinear_GSM(V[l], V[l+1], a_tau, b_tau, a_kappa, b_kappa)
         } else {
           self$fc[[l]] <- 
-            nn_BayesLinear_GP(V[l], V[l+1], tau_prior_a, tau_prior_b, TRUE)
+            nn_BayesLinear_GP(V[l], V[l+1], a_tau, b_tau, TRUE)
         }
       }
     }
@@ -414,7 +411,7 @@ nn_spqr_MAP <- nn_module(
 
 nn_BayesLinear_GP <- nn_module(
   classname = "nn_BayesLinear",
-  initialize = function(in_features, out_features, tau_prior_a, tau_prior_b, 
+  initialize = function(in_features, out_features, a_tau, b_tau, 
                         scale_by_width = FALSE) {
     
     self$W <- nn_parameter(torch_empty(out_features,in_features))
@@ -426,8 +423,8 @@ nn_BayesLinear_GP <- nn_module(
     self$ltau_b <- nn_parameter(torch_tensor(0))
     
     # shape and rate hyperparameters for prior of tau_W and tau_b
-    self$tpa <- nn_parameter(torch_tensor(tau_prior_a), requires_grad = F)
-    self$tpb <- nn_parameter(torch_tensor(tau_prior_b), requires_grad = F)
+    self$tpa <- nn_parameter(torch_tensor(a_tau), requires_grad = F)
+    self$tpb <- nn_parameter(torch_tensor(b_tau), requires_grad = F)
     
     if (scale_by_width) {
       self$H <- nn_parameter(torch_tensor(in_features), requires_grad = F)
@@ -470,7 +467,7 @@ nn_BayesLinear_GP <- nn_module(
 
 nn_BayesLinear_ARD <- nn_module(
   classname = "nn_BayesLinear",
-  initialize = function(in_features, out_features, tau_prior_a, tau_prior_b) {
+  initialize = function(in_features, out_features, a_tau, b_tau) {
     
     self$W <- nn_parameter(torch_empty(out_features,in_features))
     # log precision hyperparameter for W
@@ -481,8 +478,8 @@ nn_BayesLinear_ARD <- nn_module(
     self$ltau_b <- nn_parameter(torch_tensor(1))
     
     # shape and rate hyperparameters for prior of tau_W and tau_b
-    self$tpa <- nn_parameter(torch_tensor(tau_prior_a), requires_grad = F)
-    self$tpb <- nn_parameter(torch_tensor(tau_prior_b), requires_grad = F)
+    self$tpa <- nn_parameter(torch_tensor(a_tau), requires_grad = F)
+    self$tpb <- nn_parameter(torch_tensor(b_tau), requires_grad = F)
     
     # initialize weights and bias
     self$reset_parameters()
@@ -513,8 +510,8 @@ nn_BayesLinear_ARD <- nn_module(
 
 nn_BayesLinear_GSM <- nn_module(
   classname = "nn_BayesLinear",
-  initialize = function(in_features, out_features, tau_prior_a, tau_prior_b,
-                        kappa_prior_a, kappa_prior_b) {
+  initialize = function(in_features, out_features, a_tau, b_tau,
+                        a_kappa, b_kappa) {
     
     # log global precision hyperparameter
     self$ltau <- nn_parameter(torch_tensor(1))
@@ -528,11 +525,11 @@ nn_BayesLinear_GSM <- nn_module(
     self$lkappa_b <- nn_parameter(torch_tensor(1))
     
     # shape and rate hyperparameters for prior of tau
-    self$tpa <- nn_parameter(torch_tensor(tau_prior_a), requires_grad = F)
-    self$tpb <- nn_parameter(torch_tensor(tau_prior_b), requires_grad = F)
+    self$tpa <- nn_parameter(torch_tensor(a_tau), requires_grad = F)
+    self$tpb <- nn_parameter(torch_tensor(b_tau), requires_grad = F)
     # shape and rate hyperparameters for prior of kappa
-    self$kpa <- nn_parameter(torch_tensor(kappa_prior_a), requires_grad = F)
-    self$kpb <- nn_parameter(torch_tensor(kappa_prior_b), requires_grad = F)
+    self$kpa <- nn_parameter(torch_tensor(a_kappa), requires_grad = F)
+    self$kpb <- nn_parameter(torch_tensor(b_kappa), requires_grad = F)
     
     # initialize weights and bias
     self$reset_parameters()
