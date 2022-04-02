@@ -50,15 +50,15 @@ check.SPQR.params <- function(params, ...) {
     prior = "ARD",
     hyperpar = list(a_sigma = 0.001, 
                     b_sigma = 0.001,
-                    a_lamdba = 0.5,
+                    a_lambda = 0.5,
                     b_lambda = 0.5),
     #------------------------#
     # MLE and MAP parameters #
-    lr = 0.05,
+    lr = 0.01,
     dropout = c(0,0),
     batchnorm = FALSE,
-    epochs = 50,
-    batch.size = NULL,
+    epochs = 200,
+    batch.size = 128,
     valid.pct = 0.2,
     early.stopping.epochs = 10,
     print.every.epochs = 10,
@@ -81,7 +81,7 @@ check.SPQR.params <- function(params, ...) {
     prior = "ARD",
     hyperpar = list(a_sigma = 0.001, 
                     b_sigma = 0.001,
-                    a_lamdba = 0.5,
+                    a_lambda = 0.5,
                     b_lambda = 0.5),
     #------------------------#
     ###  MCMC parameters  ####
