@@ -29,7 +29,7 @@ check.SPQR.params <- function(params, ...) {
     stop("`n.hidden` should be specified.")
   if (params$n.knots < 8)
     stop("Very small `n.knots` can lead to severe underfitting, We recommend setting it to at least 8.")
-  params$activation <- match.arg(params$activation, c("tanh","relu")) 
+  params$activation <- match.arg(params$activation, c("tanh","relu","sigmoid")) 
   params$prior <- match.arg(params$prior, c("GP","ARD","GSM")) 
   # check method specific parameters
   if (params$method == "Bayes") {
@@ -238,4 +238,13 @@ SPQR.createFolds <- function(Y, nfold, stratified=FALSE) {
     folds[[nfold]] <- rnd_idx
   }
   return(folds)
+}
+
+get.nn.params <- function(fitted.obj){
+    a <- fitted.obj$model$parameters
+    ffnn_params <- list()
+    for(j in 1:length(a)){
+        ffnn_params[[j]] <- as_array(a[[j]])  
+    }
+    return(ffnn_params)
 }
