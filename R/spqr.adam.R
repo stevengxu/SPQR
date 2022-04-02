@@ -11,7 +11,7 @@ SPQR.adam <- function(params, X, Y, verbose = TRUE) {
       self$y <- torch_tensor(Y[indices])
     },
     
-    .getitem = function(i) {
+    .getbatch = function(i) {
       list(x = self$x[i,], y = self$y[i], index = i)
     },
     
@@ -155,7 +155,7 @@ cv.SPQR.adam <- function(params, X, Y, folds, verbose) {
       self$y <- torch_tensor(Y[indices])
     },
     
-    .getitem = function(i) {
+    .getbatch = function(i) {
       list(x = self$x[i,], y = self$y[i], index = i)
     },
     

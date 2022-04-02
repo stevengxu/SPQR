@@ -16,9 +16,10 @@ library(akima)
 source("utils.R")
 source("SPQR.mcmc.R")
 source("SPQR.adam.R")
+source("SPQR.adam.GPU.R")
 
 
-SPQR <- function(params = list(), X, Y, normalize = FALSE, verbose = TRUE, ...) {
+SPQR <- function(params = list(), X, Y, normalize = FALSE, use.GPU = FALSE, verbose = TRUE, ...) {
   
   if (is.null(n <- nrow(X))) dim(X) <- c(length(X),1) # 1D matrix case
   if (n == 0) stop("`X` is empty")
@@ -43,7 +44,18 @@ SPQR <- function(params = list(), X, Y, normalize = FALSE, verbose = TRUE, ...) 
   if (params$method == "Bayes") {
     out <- SPQR.mcmc(params=params, X=X, Y=Y, verbose=verbose)
   } else {
-    out <- SPQR.adam(params=params, X=X, Y=Y, verbose=verbose)
+      if(use.GPU == T & !cuda_is_available()){
+          print('GPU acceleration not available, using CPU')
+          out <- SPQR.adam(params=params, X=X, Y=Y, verbose=verbose)
+      } else if(use.GPU == F & !cuda_is_available()){
+          out <- SPQR.adam(params=params, X=X, Y=Y, verbose=verbose)
+      } else if(use.GPU == T & cuda_is_available()){
+          out <- SPQR.adam.GPU(params=params, X=X, Y=Y, verbose=verbose)
+      } else {
+          if(verbose == T)
+              print('GPU acceleration is available')
+          out <- SPQR.adam(params=params, X=X, Y=Y, verbose=verbose)
+      }
   }
   if (normalize) {
     out$normalize$X <- X.range
@@ -358,7 +370,7 @@ predict.SPQR <- function(object, X, Y = NULL, nY = 501, type = c("QF","PDF","CDF
   return(qf)
 }
 
-cv.SPQR <- function(params = list(), X, Y, nfold, folds=NULL, stratified=FALSE, 
+cv.SPQR <- function(params = list(), X, Y, use.GPU = FALSE, nfold, folds=NULL, stratified=FALSE, 
                     verbose = TRUE, ...) {
   params <- check.SPQR.params(params, ...)
   if (params$method == "Bayes") {
@@ -373,7 +385,18 @@ cv.SPQR <- function(params = list(), X, Y, nfold, folds=NULL, stratified=FALSE,
       stop("`nfold` must be > 1")
     folds <- SPQR.createFolds(Y, nfold, stratified)
   }
-  out <- cv.SPQR.adam(params=params, X=X, Y=Y, folds=folds, verbose=verbose)
+  if(use.GPU == T & !cuda_is_available()){
+      print('GPU acceleration not available, using CPU')
+      out <- cv.SPQR.adam(params=params, X=X, Y=Y, folds=folds, verbose=verbose)
+  } else if(use.GPU == F & !cuda_is_available()){
+      out <- cv.SPQR.adam(params=params, X=X, Y=Y, folds=folds, verbose=verbose)
+  } else if(use.GPU == T & cuda_is_available()){
+      out <- cv.SPQR.adam.GPU(params=params, X=X, Y=Y, folds=folds, verbose=verbose)
+  } else {
+      if(verbose == T)
+          print('GPU acceleration is available')
+      out <- cv.SPQR.adam(params=params, X=X, Y=Y, folds=folds, verbose=verbose)
+  }
   invisible(out)
 }
 
