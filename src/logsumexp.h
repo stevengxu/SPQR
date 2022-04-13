@@ -1,11 +1,18 @@
-#ifndef LOGSUMEXP_H
-#define LOGSUMEXP_H
+#ifndef LOGSUMEXP_HPP
+#define LOGSUMEXP_HPP
 
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 
+
+/************************************
+ * Helper functions for calculating
+ * log of sum of exponentials
+ ***********************************/
+
 // logSumExp of a vector
-double logSumExp(const arma::vec& x) {
+double logSumExp(const arma::vec& x)
+{
   unsigned int maxi = x.index_max();
   double maxv = x(maxi);
   if (!(maxv > -arma::datum::inf)) {
@@ -19,15 +26,15 @@ double logSumExp(const arma::vec& x) {
   }
   return maxv + log1p(cumsum);
 }
-
 // logSumExp of two numbers
-double logSumExp(const double& x, const double& y) {
+double logSumExp(const double& x, const double& y)
+{
   arma::vec v = {x, y};
   return logSumExp(v);
 }
-
 // logSumExp of each row of a matrix
-arma::vec rowLogSumExps(const arma::mat& X) {
+arma::vec rowLogSumExps(const arma::mat& X)
+{
   const unsigned int nrow = X.n_rows;
   arma::vec res(nrow, arma::fill::zeros);
   for (unsigned int i = 0; i < nrow; i++) {
@@ -35,9 +42,9 @@ arma::vec rowLogSumExps(const arma::mat& X) {
   }
   return res;
 }
-
 // logSumExp of each col of a matrix
-arma::vec colLogSumExps(const arma::mat& X) {
+arma::vec colLogSumExps(const arma::mat& X)
+{
   const unsigned int ncol = X.n_cols;
   arma::vec res(ncol, arma::fill::zeros);
   for (unsigned int i = 0; i < ncol; i++) {

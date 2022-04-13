@@ -1,4 +1,25 @@
-source("SPQR.R")
+library(SPQR)
+
+# RV for the simulation design
+rYgivenX <- function(n,p){
+  X     <- matrix(runif(n*p),n,p)
+  p     <- 1/(1+exp(-1+2*(X[,1]>0.5)))
+  Z     <- rbinom(n,1,p)
+  Y     <- Z*rlnorm(n,0,0.75) + (1-Z)*rnorm(n,2,0.5)
+  out   <- list(Y=Y,X=X)
+  return(out)}
+
+# PDF for the simulation design
+dYgivenX <- function(y,X){
+  p     <- 1/(1+exp(-1+2*(X[1]>0.5)))
+  out   <- p*dlnorm(y,0,0.75) + (1-p)*dnorm(y,2,0.5)
+  return(out)}
+
+# QF for the simulation design
+qYgivenX <- function(tau,X){
+  m   <- 1/(1+exp(-1+5*X[1]*X[2]))
+  out <- qbeta(tau,10*m,10*(1-m))
+  return(out)}
 
 # Simulation
 # Strong (X1,X2) interaction; X3 has no effect
@@ -24,19 +45,15 @@ qYgivenX <- function(tau,X){
   return(out)}
 
 set.seed(919)
-n   <- 1000   # Number of observations
+n   <- 2000   # Number of observations
 p   <- 3      # Number of covariates
 dat <- rYgivenX(n,p)
 X   <- dat$X
 Y   <- dat$Y
 
 # not all parameters need to be specified, see utils.R for default values
-adam.params <- list(
-  method = "MLE",
-  n.knots = 12,
-  n.hidden = 10,
-  activation = "tanh",
-  lr = 0.008, # learning rate
+mle.control <- list(
+  lr = exp(-4), # learning rate
   dropout = c(0,0), # a tuple with first element indicating dropout prob for input layer
                     # and second element for common dropout prob for hidden layers
   batchnorm = F,
@@ -48,7 +65,8 @@ adam.params <- list(
 )
 
 # using adam to obtain mle estimate
-mle.fit <- SPQR(params=adam.params, X=X, Y=Y)
+mle.fit <- SPQR(X=X, Y=Y, n.knots=8, n.hidden=10, activation="tanh",
+                method="MLE", control=mle.control, use.GPU=F)
 # obtain summary of fitted model
 mle.summary <- summary(mle.fit)
 mle.summary # directly calling mle.fit will give same result
@@ -58,7 +76,9 @@ print(mle.summary, showModel=T)
 print(mle.fit, showModel=T)
 
 # Calculate K-fold CV error
-cv.out <- cv.SPQR(params=adam.params, X=X, Y=Y, nfold=5)
+folds <- createFolds.SPQR(Y, nfold=5)
+cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, n.knots=12, n.hidden=10, activation="tanh",
+                  method="MLE", control=mle.control, use.GPU=T)
 
 # alternatively the user can use pre-computed folds
 # this can be wrapped in a gridsearch skeleton for parameter selection purpose
@@ -67,7 +87,7 @@ if (FALSE) {
   lr.grid <- exp(-5:-1)
   result <- do.call('rbind',lapply(lr.grid, FUN=function(lr) {
     adam.params$lr <- lr
-    cv.out <- cv.SPQR(method="MLE", params=adam.params, X=X, Y=Y, n.hidden=n.hidden, 
+    cv.out <- cv.SPQR(method="MLE", params=adam.params, X=X, Y=Y, n.hidden=n.hidden,
                       n.knots=n.knots, activation=activation, folds=folds)
     c(lr, cv.out$cve)
   }))
@@ -76,9 +96,10 @@ if (FALSE) {
 
 # using adam to obtain map estimate
 # MAP can be more sensitive to learning rate
-adam.params$method <- "MAP"
-adam.params$prior <- "ARD"
-map.fit <- SPQR(params=adam.params, X=X, Y=Y)
+map.control <- mle.control
+map.control$lr <- exp(-5)
+map.fit <- SPQR(X=X, Y=Y, n.knots=8, n.hidden=10, activation="tanh",
+                method="MAP", prior="ARD", control=map.control, use.GPU=F)
 # obtain summary of fitted model
 map.summary <- summary(map.fit)
 # print summary info
@@ -86,20 +107,15 @@ print(map.summary, showModel=T)
 # Do the previous two-steps together
 print(map.fit, showModel=T)
 
-mcmc.params <- list(
-  method="Bayes",
-  n.knots = 12,
-  n.hidden = 10,
-  activation = "tanh",
-  sampler = "NUTS", # "HMC" also available
-  prior = "ARD", # "GP" and "GSM" also available
+mcmc.control <- list(
   iter = 1000, # total number of iterations
   warmup = 250, # warmup iters for stepsize and mass matrix adaptation
   thin = 5 # period for saving posterior samples
 )
 
 # using mcmc to obtain bayes estimate
-bayes.fit <- SPQR(params=mcmc.params, X=X, Y=Y)
+bayes.fit <- SPQR(X=X, Y=Y, n.knots=8, n.hidden=10, activation="tanh",
+                  method="MCMC", prior="GSM", control=mcmc.control)
 # obtain summary of fitted model
 bayes.summary <- summary(bayes.fit)
 # print summary info
@@ -238,7 +254,7 @@ for (j in 1:3) {
   ale.map <- QALE(map.fit, var.index=j, tau=tau)
   ale.bayes <- QALE(bayes.fit, var.index=j, tau=tau)
   ale.ans <- QALE(list(X=X), var.index=j, tau=tau, pred.fun=pred.fun)
-  
+
   for (i in 1:length(tau)) {
     plot(ale.ans$x, ale.ans$ALE[,i], type="l", xlab=parse(text=paste0("X[",j,"]")), ylab="ALE", col=1)
     lines(ale.mle$x, ale.mle$ALE[,i], col=2)
@@ -252,8 +268,6 @@ for (j in 1:3) {
 
 # using built-in plotQALE
 plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1))
-# all lines in one plot, easier comparison
-plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1), singlePlot=TRUE)
 # with credible bands
 # SLOW!!
 plotQALE(bayes.fit, var.index=1, tau=seq(0.1,0.9,0.1), ci.level=0.95)
@@ -291,3 +305,132 @@ plotQVI(bayes.fit, tau=seq(0.1,0.9,0.1))
 # VERY SLOW!!
 plotQVI(bayes.fit, tau=seq(0.1,0.9,0.1), ci.level=0.95)
 
+
+
+
+# Electric grid data
+
+library(caret)
+library(tidyr)
+library(dplyr)
+data("AUDem", package = "qgam")
+meanDem <- AUDem$meanDem
+
+
+
+meanDem <- meanDem %>%
+  mutate(value=1) %>%
+  spread(dow, value, fill=0)
+
+y <- meanDem$dem
+X <- as.matrix(meanDem %>% select(-c(date,dem,dem48)))
+X.max <- colMaxs(X)
+X.min <- colMins(X)
+y.max <- max(y)
+y.min <- min(y)
+X <- t((t(X) - X.min) / (X.max - X.min))
+y <- (y - y.min ) / (y.max - y.min)
+
+mcmc.params <- list(
+  sampler = "NUTS", # "HMC" also available
+  prior = "ARD", # "GP" and "GSM" also available
+  n.hidden = 30,
+  n.knots = 12,
+  activation = "tanh",
+  control = list(adapt_delta = 0.9), # HMC control parameters
+  iter = 500, # total number of iterations
+  warmup = 250, # warmup iters for stepsize and mass matrix adaptation
+  thin = 1 # period for saving posterior samples
+)
+
+# using mcmc to obtain bayes estimate
+bayes.fit <- spqr.train(method="Bayes", params=mcmc.params, X=X, y=y, verbose=2)
+
+
+autoplot(bayes.fit, type="ALE", var.index=2, tau=seq(0.1,0.9,0.1))
+
+
+
+# Simulation 1
+
+set.seed(123)
+X <- matrix(runif(10*3),10,3)
+m <- 1/(1+exp(-1+5*X[,1]*X[,2]))
+Y <- seq(0,1,0.01)
+d <- sapply(m,function(u){dbeta(Y,10*u,10*(1-u))})
+matplot(Y,d,type="l")
+
+df <- data.frame(y=rep(Y,nrow(X)),d=c(d),obs=rep(1:nrow(X),each=length(Y)))
+p1 <- ggplot(data=df,aes(x=y,y=d))+
+  geom_line(aes(group=obs,color=factor(obs)))+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position="none",
+        axis.title = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5,size = 18),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12)) +
+  labs(x="Y",y=TeX("$f(Y|X)$")) +
+  ggtitle("Conditional Density Functions")
+
+X <- cbind(seq(0,1,0.01),0.1)
+m <- 1/(1+exp(-1+5*X[,1]*X[,2]))
+tau <- seq(0.05,0.95,0.05)
+q <- sapply(m,function(u){qbeta(tau,10*u,10*(1-u))})
+matplot(X[,1],t(q),type="l",col=1)
+
+df <- data.frame(X=X[,1],q=c(t(q)),tau=rep(tau,each=nrow(X)))
+p2 <- ggplot(data=df,aes(x=X,y=q))+
+  geom_line(aes(group=tau))+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position="none",
+        axis.title = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5,size = 18),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12)) +
+  labs(x=TeX("$X_1$"),y=TeX("$Q(\\tau | X_1 , X_2 = 0.1)$")) +
+  ggtitle(TeX("Quantile curves at $X_2=0.1$"))
+
+cairo_pdf(filename="SPQR_model/sim1dqf.pdf",width = 12, height = 4)
+
+grid.arrange(p1,p2,p3,nrow=1)
+
+
+# Plot quantile slice
+
+xx <- pracma::meshgrid(seq(0,1,0.01),seq(0,1,0.01))
+xxx <- cbind(c(xx$X),c(xx$Y),0.5)
+qq <- predict.SPQR(bayes.fit, xxx, yyy, type="qf", tau=c(0.1,0.5,0.9), ci.level=NULL)
+
+
+fig <- plot_ly(x = xx$X, y = xx$Y, showscale = FALSE)
+m <- 1/(1+exp(-1+5*xx$X*xx$Y))
+par(mfrow=c(3,3))
+for (i in 1:3) {
+  q <- qbeta(tau[i],10*m,10*(1-m))
+  image(x=seq(0,1,0.01),y=seq(0,1,0.01),z=matrix(q,nrow=101))
+  image(x=seq(0,1,0.01),y=seq(0,1,0.01),z=matrix(qq[,i],nrow=101))
+}
+
+q <- sapply(tau,function(tau){
+  qbeta(tau, 10*m, 10*(1-m))
+})
+
+
+df <- data.frame(Q=c(q,qq),X1=c(xx$X),X2=c(xx$Y),D=rep(c("True","Estimated"),each=length(q)),tau=rep(tau,each=nrow(q)))
+ggplot(data=df, aes(x=X1,y=X2)) +
+  geom_raster(aes(fill=Q)) +
+  geom_contour(aes(z=Q),colour="black") +
+  scale_fill_gradientn(colors=rev(brewer.pal(10,"Spectral"))) +
+  facet_grid(D~tau) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.spacing = unit(0, "lines"),
+        axis.title = element_text(size = 15, face="bold"),
+        plot.title = element_text(hjust = 0.5,size = 18),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12))

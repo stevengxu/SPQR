@@ -1,5 +1,6 @@
-**/spqr_model
+**/spqr_model/
+*.model.pt
 *.pdf
-*.pt
 *.jpeg
 *.png
+.Rproj.user

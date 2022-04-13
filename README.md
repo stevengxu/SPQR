@@ -1,2 +1,2 @@
-# spqr
+# SPQR
 Semi-Parametric Quantile Regression

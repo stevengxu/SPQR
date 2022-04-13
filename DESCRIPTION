@@ -1,0 +1,15 @@
+Package: SPQR
+Type: Package
+Title: Semi-Parametric Quantile Regression
+Version: 0.1.0
+Authors@R: c(person("Steven", "Xu", email = "sgxu@ncsu.edu", role = c("aut")))
+Description: Semi-Parametric Quantile Regression fitted using frequentist and Bayesian method.  
+    The semi-parametric quantile regression model is described in Xu and Reich (2021) <doi:10.1111/biom.13576>.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.8), stats, utils, torch, splines2, ggplot2, rstan, loo, progressr, akima, RColorBrewer, yaImpute, coro
+LinkingTo: Rcpp, RcppArmadillo
+Author: Steven Xu [aut]
+Maintainer: Steven Xu <sgxu@ncsu.edu>
+RoxygenNote: 7.1.2
