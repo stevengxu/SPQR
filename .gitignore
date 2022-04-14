@@ -4,6 +4,7 @@
 *.jpeg
 *.png
 .Rproj.user
+.Rproj
 
 **/src/*.o
 **/src/*.so
