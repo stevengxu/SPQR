@@ -3,31 +3,34 @@
 #' Computes the estimated spline coefficients of a `SPQR` class object
 #' @name coef.SPQR
 #'
-#' @param object an object of class \code{SPQR}
-#' @param newx covariate values for which the coefficient is calculated
-#'
-#'
 #' @method coef SPQR
+#'
+#' @param object An object of class \code{SPQR}.
+#' @param X The covariate vector/matrix for which the coefficient is calculated.
+#' @param ... Other arguments.
+#'
+#' @return A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
+#'
 #' @export
-coef.SPQR <- function(object, newx, ...) {
+coef.SPQR <- function(object, X, ...) {
 
   p <- ncol(object$X)
-  if (NCOL(newx) != p) {
-    if (NROW(newx) != p) stop("incompatible dimensions")
-    else dim(newx) <- c(1,length(newx)) # treat vector as single observation
+  if (NCOL(X) != p) {
+    if (NROW(X) != p) stop("incompatible dimensions")
+    else dim(X) <- c(1,length(X)) # treat vector as single observation
   }
   if (!is.null(object$normalize)) {
     X.range <- object$normalize$X
     for (j in 1:p) {
-      newx[,p] <- (newx[,p] - X.range[1,p])/(diff(X.range[,p]))
+      X[,p] <- (X[,p] - X.range[1,p])/(diff(X.range[,p]))
     }
   }
   if (object$method == "MCMC") {
-    newx <- t(newx)
-    n <- ncol(newx)
+    X <- t(X)
+    n <- ncol(X)
     nnn <- length(object$model)
     out <- rowMeans(sapply(object$model, function(W){
-      .coefs(W,newx,object$config$activation)
+      .coefs(W,X,object$config$activation)
     }))
     dim(out) <- c(n, object$config$n.knots)
   } else {
@@ -35,11 +38,11 @@ coef.SPQR <- function(object, newx, ...) {
     model$eval()
     if (object$method == "MAP" && object$control$use.GPU) {
       model$to(device="cuda")
-      newx <- torch_tensor(newx, device="cuda")
-      out <- as.matrix(model(newx)$output$to(device="cpu"))
+      X <- torch_tensor(X, device="cuda")
+      out <- as.matrix(model(X)$output$to(device="cpu"))
     } else {
-      newx <- torch_tensor(newx)
-      out <- as.matrix(model(newx)$output)
+      X <- torch_tensor(X)
+      out <- as.matrix(model(X)$output)
     }
   }
   colnames(out) <- paste0("theta[",1:object$config$n.knots,"]")

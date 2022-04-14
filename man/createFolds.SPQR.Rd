@@ -6,6 +6,16 @@
 \usage{
 createFolds.SPQR(Y, nfold, stratified = FALSE)
 }
+\arguments{
+\item{Y}{The response vector.}
+
+\item{nfold}{The number of cross-validation folds.}
+
+\item{stratified}{If \code{TRUE}, stratified folds based on quantiles of `Y` are generated.}
+}
+\value{
+A list of size \code{nfold} containing indices of the observations for each fold.
+}
 \description{
 Helper function to generate cross-validation folds that can be used by \code{cv.SPQR}.
 }

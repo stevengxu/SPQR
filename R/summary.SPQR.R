@@ -1,5 +1,13 @@
 #' @title summaary method for SPQR
+#' @description summarizes the output produced by \code{SPQR()} and structures them in a more organized way to be examined by the user.
+#'
 #' @method summary SPQR
+#'
+#' @param object An object of class \code{"SPQR"}.
+#' @param ... Other arguments.
+#'
+#' @return An object of class \code{"summary.SPQR"}.
+#'
 #' @export
 summary.SPQR <- function(object, ...) {
 

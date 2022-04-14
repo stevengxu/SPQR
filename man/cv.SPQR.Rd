@@ -21,7 +21,47 @@ cv.SPQR(
   ...
 )
 }
+\arguments{
+\item{X}{The covariate matrix (without intercept column)}
+
+\item{Y}{The response vector.}
+
+\item{folds}{A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.}
+
+\item{n.knots}{The number of basis functions. Default: 10.}
+
+\item{n.hidden}{A vector specifying the number of hidden neurons in each hidden layer. Default: 10.}
+
+\item{activation}{The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.}
+
+\item{method}{Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.}
+
+\item{prior}{The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.}
+
+\item{hyperpar}{A list of named hyper-prior hyperparameters to use instead of the default values, including
+\code{a_lambda}, \code{b_lambda}, \code{a_sigma} and \code{b_sigma}. The default value is 0.001 for all four
+hyperparameters.}
+
+\item{control}{A list of named and method-dependent parameters that allows finer
+control of the behavior of the computational approaches. See \code{SPQR()} for all available
+parameters and their default values.}
+
+\item{normalize}{If \code{TRUE}, all covariates will be normalized to take values between [0,1].}
+
+\item{verbose}{If \code{TRUE} (default), training progress will be printed.}
+
+\item{seed}{Random number generation seed.}
+
+\item{...}{other parameters to pass to \code{control}.}
+}
+\value{
+A named list including the following components:
+\item{control}{the list of all control parameters.}
+\item{cve}{the cross-validation error.}
+\item{folds}{the CV folds.}
+}
 \description{
 Fits SPQR using either MLE or MAP method. Computes K-fold cross-validation error
-based on pre-computed folds.
+based on pre-computed folds. The arguments are mostly the same as in \code{SPQR()}
+except for an additional \code{folds} argument that takes pre-computed CV folds.
 }

@@ -7,12 +7,15 @@
 \method{print}{SPQR}(x, showModel = FALSE, ...)
 }
 \arguments{
-\item{x}{an object of class \code{SPQR}}
+\item{x}{An object of class \code{SPQR}}
 
-\item{showModel}{whether to print the NN structure}
+\item{showModel}{If \code{TRUE}, prints the detailed NN architecture by layer.}
 
-\item{...}{other arguments}
+\item{...}{Other arguments.}
 }
 \description{
-print method for SPQR
+Summarizes and print the output produced by SPQR() in an organized way.
+}
+\details{
+This is equivalent to the function call \code{print.summary.SPQR(summary.SPQR(object), ...)}.
 }

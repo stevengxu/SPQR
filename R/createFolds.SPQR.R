@@ -1,6 +1,13 @@
 #' @title generate cross-validation folds
 #' @description
 #' Helper function to generate cross-validation folds that can be used by \code{cv.SPQR}.
+#'
+#' @param Y The response vector.
+#' @param nfold The number of cross-validation folds.
+#' @param stratified If \code{TRUE}, stratified folds based on quantiles of `Y` are generated.
+#'
+#' @return A list of size \code{nfold} containing indices of the observations for each fold.
+#'
 #' @export
 createFolds.SPQR <- function(Y, nfold, stratified=FALSE) {
 

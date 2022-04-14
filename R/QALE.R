@@ -1,8 +1,30 @@
 #' @title Quantile accumulated local effects (ALE)
 #' @description
-#' Computes the quantile ALEs of a `SPQR` class object
+#' Computes the quantile ALEs of a `SPQR` class object. The function plots the ALE main effects across
+#' \code{tau} using line plots for a single covariate, and the ALE interaction effects across \code{tau}
+#' using contour plots for two covariates .
+#'
+#' @param object An object of class \code{"SPQR"}.
+#' @param var.index a numeric scalar or length-two vector of indices of the
+#'   covariates for which the ALEs will be calculated. When \code{length(var.index)==1},
+#'   the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
+#'   the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.
+#' @param tau The quantiles of interes.
+#' @param n.bins  the maximum number of intervals into which the covariate range is divided when
+#'   calculating the ALEs. The actual number of intervals depends on the number of unique values in
+#' \code{X[,var.index]}. When \code{length(var.index)==2}, \code{n.bins} is applied to both covariates.
+#' @param ci.level The credible level for computing the pointwise credible intervals for ALE
+#'   when \code{length(var.index)==1}. The default is 0 indicating no credible intervals should be computed.
+#' @param getAll If \code{TRUE} and \code{length(var.index)==1}, extracts all posterior samples of ALE.
+#' @param pred.fun  A function that will be used instead of \code{predict.SPQR()}
+#'   for computing predicted quantiles given covariates. This can be useful when the user wants to compare
+#'   the QALE calculated using SPQR to that using other quantile regression models, or maybe that using
+#'   the true model in a simulation study.
+#'
+#' @return A named array containing computed quantile ALEs.
 #'
 #' @importFrom stats quantile
+#'
 #' @export
 QALE <- function(object, var.index, tau, n.bins = 40, ci.level = 0,
                  getAll = FALSE, pred.fun = NULL) {

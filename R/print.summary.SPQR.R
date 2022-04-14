@@ -2,9 +2,9 @@
 #'
 #' @name summary.SPQR
 #'
-#' @param x an object of class \code{SPQR}
-#' @param showMode whether to print the NN structure
-#' @param ... other arguments
+#' @param x An object of class \code{SPQR}
+#' @param showModel If \code{TRUE}, prints the detailed NN architecture by layer.
+#' @param ... Other arguments.
 #'
 #' @export
 print.summary.SPQR <- function(x, showModel = FALSE, ...) {

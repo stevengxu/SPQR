@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotQALE.R
 \name{plotQALE}
 \alias{plotQALE}
-\title{plot quantile ALEs}
+\title{Plot accumulated local effects (ALE)}
 \usage{
 plotQALE(
   object,
@@ -13,6 +13,30 @@ plotQALE(
   n.bins = 40
 )
 }
-\description{
+\arguments{
+\item{object}{An object of class \code{"SPQR"}.}
 
+\item{var.index}{a numeric scalar or length-two vector of indices of the covariates for
+which the ALEs will be calculated. When \code{length(var.index)==1},
+the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
+the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.}
+
+\item{tau}{The quantiles of interes.}
+
+\item{ci.level}{The credible level for plotting the credible bands for ALE
+when \code{length(var.index)==1}. The default is 0 indicating no credible bands should be plotted.}
+
+\item{getAll}{If \code{TRUE} and \code{length(var.index)==1}, plots all posterior samples of ALE.}
+
+\item{n.bins}{the maximum number of intervals into which the covariate range is divided when
+  calculating the ALEs. The actual number of intervals depends on the number of unique values in
+\code{X[,var.index]}. When \code{length(var.index)==2}, \code{n.bins} is applied to both covariates.}
+}
+\value{
+A \code{ggplot} object.
+}
+\description{
+Computes and plots the quantile ALEs of a `SPQR` class object. The function plots the ALE main effects across
+\code{tau} for a single covariate using line plots, and the ALE interaction effects between two covariates
+across \code{tau} using contour plots.
 }

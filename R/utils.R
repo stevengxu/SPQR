@@ -1,4 +1,5 @@
 #' @importFrom torch `%>%` torch_tensor nnf_linear nnf_softmax nnf_dropout nn_batch_norm1d nn_parameter distr_normal distr_gamma
+NULL
 
 .coefs <- function(W, X, activation = "tanh") {
   .W <- W$W

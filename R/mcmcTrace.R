@@ -1,8 +1,21 @@
 #' @title plot MCMC trace plots
 #' @description
-#' Show trace plot of the log-likelihood or estimates of a `SPQR` class object fitted using the MCMC method
+#' Show trace plot of the log-likelihood or estimates of a \code{"SPQR"} class object fitted using the MCMC method
+#'
+#' @param object An object of class \code{SPQR}.
+#' @param target A character indicating the statistic/estimate for which traceplot should be plotted;
+#'   \code{"loglik"}: log-likelihood (default), \code{"PDF"}: probability density function, \code{"CDF"}: cumulative density function,
+#'   \code{"QF"}: quantile function.
+#' @param X If \code{target != "loglik"}, a row vector specifying the covariate values for which the estimates are computed. Default: \code{NULL}.
+#' @param Y If \code{target == "PDF" || target == "CDF"} a scalar specifying the response value for which the estimates are computed. Default: \code{NULL}.
+#' @param tau If \code{target != "QF"}, a scalar specifying the quantile level for which the estimates are computed. Default: 0.5.
+#' @param window A vector specifying the range of index of the MCMC samples for which the traceplot should be plotted. Default is \code{NULL}
+#'   indicating that the whole chain is plotted.
+#'
+#' @return A \code{ggplot} object.
 #'
 #' @import ggplot2
+#'
 #' @export
 mcmcTrace <- function(object, target = c("loglik","PDF","CDF","QF"),
                       X = NULL, Y = NULL, tau = 0.5, window = NULL) {

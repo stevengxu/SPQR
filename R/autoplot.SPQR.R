@@ -1,12 +1,26 @@
-#' @title plot method for SPQR
+#' @title autoplot method for SPQR
 #' @description
-#' Computes and plots the estimated PDF/CDF/QF curves
+#' Computes and plots the estimated PDF/CDF/QF curves.
 #'
-#' @method plot SPQR
+#' @method autoplot SPQR
+#'
+#' @param object An object of class \code{SPQR}
+#' @param X A row vector indicating covariate values for which the conditional PDF/CDF/QF is computed and plotted.
+#' @param nY An integer number indicating length of grid for which the PDF/CDF/QF is computed. Default: 101.
+#' @param type The function to be plotted; \code{"PDF"}: probability density function,
+#'  \code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).
+#' @param tau The grid of quantiles for which the quantile function is computed.
+#' @param ci.level The credible level for plotting the credible bands. The default is 0 indicating no credible bands should be plotted.
+#' @param getAll If \code{TRUE}, all posterior samples of the curve should be plotted. Default: \code{FALSE}.
+#' @param ... other arguments.
+#'
+#' @return A \code{ggplot} object.
+#'
 #' @import ggplot2
+#'
 #' @export
-plot.SPQR <- function(object, X, nY=501, type = c("QF","PDF","CDF"),
-tau = seq(0.05,0.95,0.05), ci.level = 0, getAll = FALSE) {
+autoplot.SPQR <- function(object, X, nY=501, type = c("QF","PDF","CDF"),
+tau = seq(0.05,0.95,0.05), ci.level = 0, getAll = FALSE, ...) {
   type <- match.arg(type)
   if (NROW(X) > 1 && NCOL(X) > 1)
     stop("`X` should contain exactly 1 observation")

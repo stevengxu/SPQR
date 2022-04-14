@@ -1,11 +1,27 @@
 #' @title predict method for class `SPQR`
 #' @description
-#'
+#' Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 #'
 #' @method predict SPQR
+#'
+#' @param object An object of class \code{"SPQR"}.
+#' @param X The covariate vector/matrix for which the predictions are computed.
+#' @param Y The response vector for which the predictions are computed. Default is \code{NULL}
+#'   indicating that a equi-distant grid vector on [0,1] of length \code{nY} is used.
+#' @param nY An integer number indicating length of grid when \code{Y} is not specified. Default: 101.
+#' @param type The function to be predicted; \code{"PDF"}: probability density function,
+#'  \code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).
+#' @param tau The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.05,0.95,0.05)}.
+#' @param ci.level The credible level for computing the pointwise credible intervals. The
+#'  default is 0 indicating no credible intervals should be computed.
+#' @param getAll If \code{TRUE}, extracts all posterior samples of the prediction. Default: \code{FALSE}.
+#' @param ... Other arguments.
+#'
+#' @return A named array containing all predicted values.
+#'
 #' @export
 
-predict.SPQR <- function(object, X, Y = NULL, nY = 501, type = c("QF","PDF","CDF"),
+predict.SPQR <- function(object, X, Y = NULL, nY = 101, type = c("QF","PDF","CDF"),
                          tau = seq(0.05,0.95,0.05), ci.level = 0, getAll = FALSE, ...) {
   type <- match.arg(type)
   stopifnot(is.numeric(ci.level))

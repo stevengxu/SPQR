@@ -4,12 +4,17 @@
 \alias{coef.SPQR}
 \title{coef method for class `SPQR`}
 \usage{
-\method{coef}{SPQR}(object, newx, ...)
+\method{coef}{SPQR}(object, X, ...)
 }
 \arguments{
-\item{object}{an object of class \code{SPQR}}
+\item{object}{An object of class \code{SPQR}.}
 
-\item{newx}{covariate values for which the coefficient is calculated}
+\item{X}{The covariate vector/matrix for which the coefficient is calculated.}
+
+\item{...}{Other arguments.}
+}
+\value{
+A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
 }
 \description{
 Computes the estimated spline coefficients of a `SPQR` class object

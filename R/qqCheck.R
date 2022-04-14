@@ -1,9 +1,17 @@
 #' @title Goodness-of-fit test for SPQR estimator
 #' @description
-#' Performs a goodness-of-fit test for the estimated probability density function (PDF) using
+#' Performs a goodness-of-fit test for the estimated conditional probability density function (PDF) using
 #' inverse transformation method.
 #'
+#' @param object An object of class \code{"SPQR"}.
+#' @param ci.level The credible level for plotting the credible bands for the Q-Q line when \code{object$method == "MCMC"}
+#'   is fitted using \code{method="MCMC"}. The default is 0 indicating no credible bands should be plotted.
+#' @param getAll If \code{TRUE} and \code{object$method == "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.
+#'
+#' @return A \code{ggplot} object.
+#'
 #' @import ggplot2
+#'
 #' @export
 
 qqCheck <- function(object, ci.level = 0, getAll = FALSE) {

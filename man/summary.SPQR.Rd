@@ -10,12 +10,17 @@
 \method{summary}{SPQR}(object, ...)
 }
 \arguments{
-\item{x}{an object of class \code{SPQR}}
+\item{x}{An object of class \code{SPQR}}
 
-\item{...}{other arguments}
+\item{showModel}{If \code{TRUE}, prints the detailed NN architecture by layer.}
 
-\item{showMode}{whether to print the NN structure}
+\item{...}{Other arguments.}
+
+\item{object}{An object of class \code{"SPQR"}.}
+}
+\value{
+An object of class \code{"summary.SPQR"}.
 }
 \description{
-summaary method for SPQR
+summarizes the output produced by \code{SPQR()} and structures them in a more organized way to be examined by the user.
 }
