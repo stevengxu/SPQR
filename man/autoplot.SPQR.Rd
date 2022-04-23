@@ -4,34 +4,24 @@
 \alias{autoplot.SPQR}
 \title{autoplot method for SPQR}
 \usage{
-\method{autoplot}{SPQR}(
-  object,
-  X,
-  nY = 501,
-  type = c("QF", "PDF", "CDF"),
-  tau = seq(0.05, 0.95, 0.05),
-  ci.level = 0,
-  getAll = FALSE,
-  ...
-)
+\method{autoplot}{SPQR}(object, X, ...)
 }
 \arguments{
 \item{object}{An object of class \code{SPQR}}
 
 \item{X}{A row vector indicating covariate values for which the conditional PDF/CDF/QF is computed and plotted.}
 
-\item{nY}{An integer number indicating length of grid for which the PDF/CDF/QF is computed. Default: 101.}
-
-\item{type}{The function to be plotted; \code{"PDF"}: probability density function,
+\item{...}{
+  Arguments passed on to \code{\link[=predict.SPQR]{predict.SPQR}}
+  \describe{
+    \item{\code{nY}}{An integer number indicating length of grid when \code{Y} is not specified. Default: 101.}
+    \item{\code{type}}{The function to be predicted; \code{"PDF"}: probability density function,
 \code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).}
-
-\item{tau}{The grid of quantiles for which the quantile function is computed.}
-
-\item{ci.level}{The credible level for plotting the credible bands. The default is 0 indicating no credible bands should be plotted.}
-
-\item{getAll}{If \code{TRUE}, all posterior samples of the curve should be plotted. Default: \code{FALSE}.}
-
-\item{...}{other arguments.}
+    \item{\code{tau}}{The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.1,0.9,0.1)}.}
+    \item{\code{ci.level}}{The credible level for computing the pointwise credible intervals. The
+default is 0 indicating no credible intervals should be computed.}
+    \item{\code{getAll}}{If \code{TRUE}, extracts all posterior samples of the prediction. Default: \code{FALSE}.}
+  }}
 }
 \value{
 A \code{ggplot} object.

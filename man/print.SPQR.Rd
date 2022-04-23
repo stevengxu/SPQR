@@ -4,14 +4,16 @@
 \alias{print.SPQR}
 \title{print method for SPQR}
 \usage{
-\method{print}{SPQR}(x, showModel = FALSE, ...)
+\method{print}{SPQR}(x, ...)
 }
 \arguments{
 \item{x}{An object of class \code{SPQR}}
 
-\item{showModel}{If \code{TRUE}, prints the detailed NN architecture by layer.}
-
-\item{...}{Other arguments.}
+\item{...}{
+  Arguments passed on to \code{\link[=print.summary.SPQR]{print.summary.SPQR}}
+  \describe{
+    \item{\code{showModel}}{If \code{TRUE}, prints the detailed NN architecture by layer.}
+  }}
 }
 \description{
 Summarizes and print the output produced by SPQR() in an organized way.

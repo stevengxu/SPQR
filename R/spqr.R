@@ -70,8 +70,8 @@
 #'
 #' @export
 SPQR <-
-  function(X, Y, n.knots = 12, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
-           method=c("MLE","MAP","MCMC"), prior=c("GP","ARD","GSM"), hyperpar=list(),
+  function(X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
+           method=c("MLE","MAP","MCMC"), prior=c("ARD","GP","GSM"), hyperpar=list(),
            control=list(), normalize = FALSE, verbose = TRUE, seed = NULL, ...)
 {
 
@@ -89,125 +89,38 @@ SPQR <-
   ny <- NCOL(Y)
   if (is.matrix(Y) && ny == 1) Y <- drop(Y) # treat 1D matrix as vector
   if (NROW(Y) != n) stop("incompatible dimensions")
-
   # normalize all covariates
   if (normalize) {
-    Y.range <- range(Y)
-    Y <- (Y - Y.range[1])/diff(Y.range)
     X.range <- apply(X,2,range)
-    X <- apply(X,2,function(x){
+    .X <- apply(X,2,function(x){
       (x - min(x)) / (max(x) - min(x))
     })
+    Y.range <- range(Y)
+    .Y <- (Y - Y.range[1])/diff(Y.range)
+  } else {
+    .X <- X; .Y <- Y
+    if (min(.Y) < 0 || max(.Y) > 1) stop("`Y` must be between 0 and 1")
   }
-  if (min(Y)<0 || max(Y)>1) stop("values of `Y` should be between 0 and 1")
-
   control <- .check.control(control, method, ...)
   hyperpar <- .update.hyperpar(hyperpar)
   if (method == "MCMC") {
-    out <- SPQR.MCMC(X=X, Y=Y, n.knots=n.knots, n.hidden=n.hidden,
+    out <- SPQR.MCMC(X=.X, Y=.Y, n.knots=n.knots, n.hidden=n.hidden,
                      activation=activation, prior=prior, hyperpar=hyperpar,
                      control=control, verbose=verbose, seed=seed)
     out$method <- method
   } else {
-    out <- SPQR.ADAM(X=X, Y=Y, n.knots=n.knots, n.hidden=n.hidden,
+    out <- SPQR.ADAM(X=.X, Y=.Y, n.knots=n.knots, n.hidden=n.hidden,
                      activation=activation, method=method, prior=prior,
                      hyperpar=hyperpar, control=control, verbose=verbose,
                      seed=seed)
   }
+  out$X <- X; out$Y <- Y
   if (normalize) {
     out$normalize$X <- X.range
     out$normalize$Y <- Y.range
   }
   class(out) <- "SPQR"
   invisible(out)
-}
-
-## Argument checking functions
-
-.check.control <- function(control, method, ...) {
-  if (!identical(class(control), "list"))
-    stop("`control` should be a list")
-
-  # merge parameters from the control and the dots-expansion
-  dot_control <- list(...)
-  if (length(intersect(names(control),names(dot_control))) > 0)
-    stop("Same parameters in `control` and in the call are not allowed. Please check your `control` list.")
-  control <- c(control, dot_control)
-
-  name_freqs <- table(names(control))
-  multi_names <- names(name_freqs[name_freqs > 1])
-  if (length(multi_names) > 0) {
-    warning("The following parameters were provided multiple times:\n\t",
-            paste(multi_names, collapse = ', '), "\n  Only the last value for each of them will be used.\n")
-    for (n in multi_names) {
-      del_idx <- which(n == names(control))
-      del_idx <- del_idx[-length(del_idx)]
-      control[[del_idx]] <- NULL
-    }
-  }
-
-  # check method specific parameters
-  if (method == "MCMC") {
-    control$algorithm <- match.arg(control$algorithm, c("NUTS","HMC"))
-    control$metric <- match.arg(control$metric, c("diag","unit","dense"))
-  }
-  control <- .update.control(control, method)
-  return(control)
-}
-
-.update.hyperpar <- function(hyperpar) {
-  default <- list(
-    a_sigma = 0.001,
-    b_sigma = 0.001,
-    a_lambda = 0.5,
-    b_lambda = 0.5
-  )
-  if (length(hyperpar) > 0) {
-    for (i in names(hyperpar))
-      default[[i]] <- hyperpar[[i]]
-  }
-  invisible(default)
-}
-
-.update.control <- function(control, method) {
-  if (method == "MCMC") {
-    default <- list(
-      algorithm = "NUTS",
-      iter = 1000,
-      warmup = 500,
-      thin = 1,
-      stepsize = NULL,
-      delta = 0.9,
-      metric = "diag",
-      max.treedepth = 6,
-      int.time = 1,
-      #################
-      gamma = 0.05,
-      kappa = 0.75,
-      t0 = 10,
-      init.buffer = 75,
-      term.buffer = 50,
-      base.window = 25
-    )
-  } else {
-    default <- list(
-      lr = 0.01,
-      dropout = c(0,0),
-      batchnorm = FALSE,
-      epochs = 200,
-      batch.size = 128,
-      valid.pct = 0.2,
-      early.stopping.epochs = 10,
-      print.every.epochs = 10,
-      save.path = file.path(getwd(),"SPQR_model"),
-      save.name = "SPQR.model.pt"
-    )
-  }
-  if (length(control) > 0) {
-    for (i in names(control))
-      default[[i]] <- control[[i]]
-  }
-  invisible(default)
 }
 
 ## Internal function for fitting SPQR using MLE and MAP methods
@@ -248,13 +161,19 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
     }
   )
   N <- nrow(X)
-  valid_indices <- sample(1:N, size = floor(N*control$valid.pct))
-  train_indices <- setdiff(1:N, valid_indices)
-
-  train_ds <- ds(train_indices)
-  train_dl <- train_ds %>% torch::dataloader(batch_size=control$batch.size, shuffle=TRUE)
-  valid_ds <- ds(valid_indices)
-  valid_dl <- valid_ds %>% torch::dataloader(batch_size=control$batch.size, shuffle=FALSE)
+  if (control$valid.pct > 0) {
+    valid_indices <- sample(1:N, size = floor(N*control$valid.pct))
+    train_indices <- setdiff(1:N, valid_indices)
+    train_ds <- ds(train_indices)
+    train_dl <- train_ds %>% torch::dataloader(batch_size=control$batch.size, shuffle=TRUE)
+    valid_ds <- ds(valid_indices)
+    valid_dl <- valid_ds %>% torch::dataloader(batch_size=control$batch.size, shuffle=FALSE)
+  } else {
+    control$early.stopping.epochs <- Inf
+    train_indices <- 1:N
+    train_ds <- ds(train_indices)
+    train_dl <- train_ds %>% torch::dataloader(batch_size=control$batch.size, shuffle=FALSE)
+  }
 
   if (method == "MAP") {
     model <- nn_SPQR_MAP(V, # MAP estimation using one of the three priors
@@ -279,7 +198,7 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
   # computational time; this is used every iteration for computing loss
   Btotal <- .basis(Y, n.knots)
   Btrain <- torch_tensor(Btotal[train_indices,], device=device)
-  Bvalid <- torch_tensor(Btotal[valid_indices,], device=device)
+  if (control$valid.pct > 0) Bvalid <- torch_tensor(Btotal[valid_indices,], device=device)
 
   # Define custom loss function
   nll.loss = function(indices, basis, coefs) {
@@ -315,29 +234,33 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
 
     })
 
-    model$eval()
-    valid_losses <- c()
+    if (control$valid.pct > 0) {
+      model$eval()
+      valid_losses <- c()
 
-    coro::loop(for (b in valid_dl) {
+      coro::loop(for (b in valid_dl) {
 
-      result <- model(b$x)
-      indices <- b$index
-      nloglik <- nll.loss(indices=indices, basis=Bvalid, coefs=result$output)
-      loss <- nloglik - result$logprior
+        result <- model(b$x)
+        indices <- b$index
+        nloglik <- nll.loss(indices=indices, basis=Bvalid, coefs=result$output)
+        loss <- nloglik - result$logprior
 
-      valid_losses <- c(valid_losses, loss$item())
+        valid_losses <- c(valid_losses, loss$item())
 
-    })
+      })
+    }
     train_loss <- mean(train_losses)
-    valid_loss <- mean(valid_losses)
+    if (control$valid.pct > 0) valid_loss <- mean(valid_losses)
     if (verbose) {
       if (epoch == 1 || epoch %% control$print.every.epochs == 0) {
-        cat(sprintf("Loss at epoch %d: training: %3f, validation: %3f\n", epoch,
-                    train_loss, valid_loss))
+        cat(sprintf("Loss at epoch %d: training: %3f", epoch,
+                    train_loss))
+        if (control$valid.pct > 0) cat(sprintf(", validation: %3f\n", valid_loss))
+        else cat("\n")
       }
     }
-    if (!is.null(control$early.stopping.epochs)) {
-      if (valid_loss < (last_valid_loss - 0.01)) {
+    if (is.finite(control$early.stopping.epochs)) {
+      if (valid_loss < last_valid_loss) {
         torch::torch_save(model, save_name)
         last_valid_loss <- valid_loss
         last_train_loss <- train_loss
@@ -354,7 +277,7 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
         }
       }
     } else {
-      last_valid_loss <- valid_loss
+      if (control$valid.pct > 0) last_valid_loss <- valid_loss
       last_train_loss <- train_loss
     }
   }
@@ -369,15 +292,14 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
     config$prior <- prior
     config$hyperpar <- hyperpar
   }
+  if (control$valid.pct > 0) loss <- list(train = last_train_loss, validation = last_valid_loss)
+  else loss <- list(train = last_train_loss)
   out <- list(model=best.model,
-              loss=list(train = last_train_loss,
-                        validation = last_valid_loss),
+              loss=loss,
               time=time.total,
               method=method,
               config=config,
-              control=control,
-              X=X,
-              Y=Y)
+              control=control)
   return(out)
 }
 ## End of ADAM method
@@ -629,9 +551,7 @@ SPQR.MCMC <-
               time=time.total,
               chain.info=chain.info,
               config=config,
-              control=control,
-              X=t(X),
-              Y=Y)
+              control=control)
   return(out)
 }
 

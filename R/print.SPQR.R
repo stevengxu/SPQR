@@ -5,11 +5,10 @@
 #' @method print SPQR
 #'
 #' @param x An object of class \code{SPQR}
-#' @param showModel If \code{TRUE}, prints the detailed NN architecture by layer.
-#' @param ... Other arguments.
+#' @inheritDotParams print.summary.SPQR -x
 #'
 #' @export
-print.SPQR <- function(x, showModel = FALSE, ...) {
+print.SPQR <- function(x, ...) {
   s <- summary(x)
-  print(s, showModel = showModel)
+  print(s, ...)
 }

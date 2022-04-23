@@ -4,13 +4,10 @@
 \alias{qqCheck}
 \title{Goodness-of-fit test for SPQR estimator}
 \usage{
-qqCheck(object, ci.level = 0, getAll = FALSE)
+qqCheck(object, getAll = FALSE)
 }
 \arguments{
 \item{object}{An object of class \code{"SPQR"}.}
-
-\item{ci.level}{The credible level for plotting the credible bands for the Q-Q line when \code{object$method == "MCMC"}
-is fitted using \code{method="MCMC"}. The default is 0 indicating no credible bands should be plotted.}
 
 \item{getAll}{If \code{TRUE} and \code{object$method == "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.}
 }

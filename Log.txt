@@ -1,0 +1,16 @@
+starting worker pid=22272 on localhost:11474 at 13:24:10.210
+starting worker pid=16332 on localhost:11474 at 13:24:10.401
+starting worker pid=23240 on localhost:11474 at 13:24:10.609
+starting worker pid=1796 on localhost:11474 at 13:24:10.754
+starting worker pid=22808 on localhost:11474 at 13:24:58.468
+starting worker pid=13240 on localhost:11474 at 13:24:58.623
+Warning message:
+package 'torch' was built under R version 4.1.3 
+package 'torch' was built under R version 4.1.3 
+starting worker pid=19832 on localhost:11474 at 13:25:17.546
+starting worker pid=9764 on localhost:11474 at 13:25:17.699
+starting worker pid=7600 on localhost:11474 at 13:25:17.847
+Warning message:
+package 'torch' was built under R version 4.1.3 
+Warning message:
+package 'torch' was built under R version 4.1.3 

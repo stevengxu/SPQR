@@ -4,33 +4,30 @@
 \alias{plotQALE}
 \title{Plot accumulated local effects (ALE)}
 \usage{
-plotQALE(
-  object,
-  var.index = NULL,
-  tau = 0.5,
-  ci.level = 0,
-  getAll = FALSE,
-  n.bins = 40
-)
+plotQALE(object, ...)
 }
 \arguments{
 \item{object}{An object of class \code{"SPQR"}.}
 
-\item{var.index}{a numeric scalar or length-two vector of indices of the covariates for
-which the ALEs will be calculated. When \code{length(var.index)==1},
+\item{...}{
+  Arguments passed on to \code{\link[=QALE]{QALE}}
+  \describe{
+    \item{\code{var.index}}{a numeric scalar or length-two vector of indices of the
+covariates for which the ALEs will be calculated. When \code{length(var.index)==1},
 the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
 the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.}
-
-\item{tau}{The quantiles of interes.}
-
-\item{ci.level}{The credible level for plotting the credible bands for ALE
-when \code{length(var.index)==1}. The default is 0 indicating no credible bands should be plotted.}
-
-\item{getAll}{If \code{TRUE} and \code{length(var.index)==1}, plots all posterior samples of ALE.}
-
-\item{n.bins}{the maximum number of intervals into which the covariate range is divided when
+    \item{\code{tau}}{The quantiles of interest.}
+    \item{\code{n.bins}}{the maximum number of intervals into which the covariate range is divided when
   calculating the ALEs. The actual number of intervals depends on the number of unique values in
 \code{X[,var.index]}. When \code{length(var.index)==2}, \code{n.bins} is applied to both covariates.}
+    \item{\code{ci.level}}{The credible level for computing the pointwise credible intervals for ALE
+when \code{length(var.index)==1}. The default is 0 indicating no credible intervals should be computed.}
+    \item{\code{getAll}}{If \code{TRUE} and \code{length(var.index)==1}, extracts all posterior samples of ALE.}
+    \item{\code{pred.fun}}{A function that will be used instead of \code{predict.SPQR()}
+for computing predicted quantiles given covariates. This can be useful when the user wants to compare
+the QALE calculated using SPQR to that using other quantile regression models, or maybe that using
+the true model in a simulation study.}
+  }}
 }
 \value{
 A \code{ggplot} object.

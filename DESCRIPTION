@@ -2,7 +2,7 @@ Package: SPQR
 Type: Package
 Title: Semi-Parametric Quantile Regression
 Version: 0.1.0
-Date: 2022-4-13
+Date: 2022-4-16
 Archs: x64
 Authors@R: c(person("Steven", "Xu", email = "sgxu@ncsu.edu", role = c("aut","cre")), 
              person("Reetam", "Majumder", email = "rmajumd3@ncsu.edu", role = c("aut")),
@@ -13,7 +13,7 @@ License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 Depends: R (>= 3.6)
-Imports: Rcpp (>= 1.0.8), stats, utils, torch, splines2, ggplot2, rstan, loo, progress, progressr, akima, RColorBrewer, yaImpute, coro (>= 1.0.2)
+Imports: Rcpp (>= 1.0.8), stats, utils, torch, splines2, ggplot2, loo, progress, progressr, akima, RColorBrewer, yaImpute, coro (>= 1.0.2)
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
 SystemRequirements: C++11

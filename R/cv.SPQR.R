@@ -193,7 +193,7 @@ cv.SPQR.ADAM <- function(X, Y, folds, n.knots, n.hidden, activation, method, pri
         }
       }
       if (!is.null(control$early.stopping.epochs)) {
-        if (valid_loss < (last_valid_loss - 0.01)) {
+        if (valid_loss < last_valid_loss) {
           last_valid_loss <- valid_loss
           last_train_loss <- train_loss
           counter <- 0

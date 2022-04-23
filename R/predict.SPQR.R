@@ -11,7 +11,7 @@
 #' @param nY An integer number indicating length of grid when \code{Y} is not specified. Default: 101.
 #' @param type The function to be predicted; \code{"PDF"}: probability density function,
 #'  \code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).
-#' @param tau The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.05,0.95,0.05)}.
+#' @param tau The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.1,0.9,0.1)}.
 #' @param ci.level The credible level for computing the pointwise credible intervals. The
 #'  default is 0 indicating no credible intervals should be computed.
 #' @param getAll If \code{TRUE}, extracts all posterior samples of the prediction. Default: \code{FALSE}.
@@ -22,8 +22,12 @@
 #' @export
 
 predict.SPQR <- function(object, X, Y = NULL, nY = 101, type = c("QF","PDF","CDF"),
-                         tau = seq(0.05,0.95,0.05), ci.level = 0, getAll = FALSE, ...) {
+                         tau = seq(0.1,0.9,0.1), ci.level = 0, getAll = FALSE, ...) {
   type <- match.arg(type)
+  if (object$method != "MCMC") {
+    ci.level <- 0
+    getAll <- FALSE
+  }
   stopifnot(is.numeric(ci.level))
   if (ci.level < 0 || ci.level >=1) stop("`ci.level` should be between 0 and 1")
 
@@ -36,7 +40,7 @@ predict.SPQR <- function(object, X, Y = NULL, nY = 101, type = c("QF","PDF","CDF
   if (X.normalize) {
     X.range <- object$normalize$X
     for (j in 1:p) {
-      X[,p] <- (X[,p] - X.range[1,p])/(diff(X.range[,p]))
+      X[,j] <- (X[,j] - X.range[1,j])/(diff(X.range[,j]))
     }
   }
   if (is.null(Y) || type == "QF") {

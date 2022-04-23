@@ -1,17 +1,19 @@
+#' @title print method for summary.SPQR
+#' @description Print the output produced by summary.SPQR().
+#' @name print.summary.SPQR
+#'
 #' @method print summary.SPQR
 #'
-#' @name summary.SPQR
-#'
-#' @param x An object of class \code{SPQR}
+#' @param x An object of class \code{summary.SPQR}
 #' @param showModel If \code{TRUE}, prints the detailed NN architecture by layer.
 #' @param ... Other arguments.
 #'
 #' @export
 print.summary.SPQR <- function(x, showModel = FALSE, ...) {
-  s <- x
-  method <- s$method
+
+  method <- x$method
   if (method != "MLE")
-    cat("\nSPQR fitted using ", method, " approach with ", s$prior, " prior", sep="")
+    cat("\nSPQR fitted using ", method, " approach with ", x$prior, " prior", sep="")
   else
     cat("\nSPQR fitted using ", method, " approach", sep="")
   cat("\U0001f680\n")
@@ -33,29 +35,26 @@ print.summary.SPQR <- function(x, showModel = FALSE, ...) {
 
   if (method == "MCMC") {
 
-    bess <- s$diagnostics$bulk.ess
-    tess <- s$diagnostics$tail.ess
-    ndiv <- s$diagnostics$ndiv
-    loo <- s$elpd$loo
-    waic <- s$elpd$waic
-    accept.ratio <- s$diagnostics$accept.ratio
-    delta <- s$diagnostics$delta
+    ndiv <- x$diagnostics$ndiv
+    loo <- x$elpd$loo
+    waic <- x$elpd$waic
+    accept.ratio <- x$diagnostics$accept.ratio
+    delta <- x$diagnostics$delta
 
     cat("\nMCMC diagnostics:\n",
-        "  bulk.ESS = ", bess, ",  tail.ESS = ", tess, "\n", sep="")
-    cat("  Final acceptance ratio is ", sprintf("%.2f", accept.ratio), " and target is ", delta, "\n", sep="")
-    if (s$diagnostics$ndiv > 0)
+        "  Final acceptance ratio is ", sprintf("%.2f", accept.ratio), " and target is ", delta, "\n", sep="")
+    if (x$diagnostics$ndiv > 0)
       cat("  There were ", paste0(ndiv, " divergent transitions after warmup"), "\n", sep="")
 
     cat("\nExpected log pointwise predictive density (elpd) estimates:\n",
         "  elpd.LOO = ", loo, ",  elpd.WAIC = ", waic, "\n", sep="")
   } else {
-    tr <- s$loss$train
-    va <- s$loss$validation
+    tr <- x$loss$train
+    va <- x$loss$validation
     cat("\nLoss:\n",
         "  train = ", tr, ",  validation = ", va, "\n", sep="")
   }
-  cat("\nElapsed time: ", paste0(sprintf("%.2f", s$time), " minutes"), "\n", sep = "")
+  cat("\nElapsed time: ", paste0(sprintf("%.2f", x$time), " minutes"), "\n", sep = "")
 }
 
 

@@ -10,7 +10,7 @@
   Y = NULL,
   nY = 101,
   type = c("QF", "PDF", "CDF"),
-  tau = seq(0.05, 0.95, 0.05),
+  tau = seq(0.1, 0.9, 0.1),
   ci.level = 0,
   getAll = FALSE,
   ...
@@ -29,7 +29,7 @@ indicating that a equi-distant grid vector on [0,1] of length \code{nY} is used.
 \item{type}{The function to be predicted; \code{"PDF"}: probability density function,
 \code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).}
 
-\item{tau}{The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.05,0.95,0.05)}.}
+\item{tau}{The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.1,0.9,0.1)}.}
 
 \item{ci.level}{The credible level for computing the pointwise credible intervals. The
 default is 0 indicating no credible intervals should be computed.}

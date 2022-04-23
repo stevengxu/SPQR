@@ -34,9 +34,8 @@ mcmcTrace <- function(object, target = c("loglik","PDF","CDF","QF"),
   data <- data.frame(x=seq_along(divergent), divergent=divergent)
   if (sum(divergent, na.rm=T) > 0) data$divergent <- divergent
   if (target == "loglik") {
-    loglik <- rowMeans(object$chain.info$loglik)
+    loglik <- rowSums(object$chain.info$loglik)
     data$target <- loglik[window[1]:window[2]]
-    target <- "log-likelihood"
   } else {
     if (is.null(dim(X))) dim(X) <- c(1,length(X))
     stopifnot(NROW(X)==1)
@@ -48,6 +47,11 @@ mcmcTrace <- function(object, target = c("loglik","PDF","CDF","QF"),
     data$target <-
       predict.SPQR(object=object, X=X, Y=Y, type=target, tau=tau, getAll=TRUE)[window[1]:window[2]]
   }
+  ylab <- switch(target,
+                 `QF` = "Quantile",
+                 `PDF` = "Density",
+                 `CDF` = "Probability",
+                 `loglik` = "log-Likelihood")
   p <-
     ggplot(data=data) +
     geom_line(aes(x=.data$x,y=.data$target),color="#414487FF") +
@@ -58,7 +62,7 @@ mcmcTrace <- function(object, target = c("loglik","PDF","CDF","QF"),
           plot.title = element_text(hjust = 0.5, size = 18),
           axis.text.y = element_text(size = 12),
           axis.text.x = element_text(size = 12)) +
-    labs(x="Post-warmup iteration", y=target) +
+    labs(x="Post-warmup iteration", y=ylab) +
     scale_x_continuous(breaks = pretty)
 
   if (sum(divergent, na.rm=T)>0) {

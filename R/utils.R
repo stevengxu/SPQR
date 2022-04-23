@@ -28,6 +28,95 @@ NULL
   return(B)
 }
 
+## Argument checking functions
+
+.check.control <- function(control, method, ...) {
+  if (!identical(class(control), "list"))
+    stop("`control` should be a list")
+
+  # merge parameters from the control and the dots-expansion
+  dot_control <- list(...)
+  if (length(intersect(names(control),names(dot_control))) > 0)
+    stop("Same parameters in `control` and in the call are not allowed. Please check your `control` list.")
+  control <- c(control, dot_control)
+
+  name_freqs <- table(names(control))
+  multi_names <- names(name_freqs[name_freqs > 1])
+  if (length(multi_names) > 0) {
+    warning("The following parameters were provided multiple times:\n\t",
+            paste(multi_names, collapse = ', '), "\n  Only the last value for each of them will be used.\n")
+    for (n in multi_names) {
+      del_idx <- which(n == names(control))
+      del_idx <- del_idx[-length(del_idx)]
+      control[[del_idx]] <- NULL
+    }
+  }
+
+  # check method specific parameters
+  if (method == "MCMC") {
+    control$algorithm <- match.arg(control$algorithm, c("NUTS","HMC"))
+    control$metric <- match.arg(control$metric, c("diag","unit","dense"))
+  }
+  control <- .update.control(control, method)
+  return(control)
+}
+
+.update.hyperpar <- function(hyperpar) {
+  default <- list(
+    a_sigma = 0.001,
+    b_sigma = 0.001,
+    a_lambda = 0.001,
+    b_lambda = 0.001
+  )
+  if (length(hyperpar) > 0) {
+    for (i in names(hyperpar))
+      default[[i]] <- hyperpar[[i]]
+  }
+  invisible(default)
+}
+
+.update.control <- function(control, method) {
+  if (method == "MCMC") {
+    default <- list(
+      algorithm = "NUTS",
+      iter = 1000,
+      warmup = 500,
+      thin = 1,
+      stepsize = NULL,
+      delta = 0.9,
+      metric = "diag",
+      max.treedepth = 6,
+      int.time = 1,
+      #################
+      gamma = 0.05,
+      kappa = 0.75,
+      t0 = 10,
+      init.buffer = 75,
+      term.buffer = 50,
+      base.window = 25
+    )
+  } else {
+    default <- list(
+      use.GPU = FALSE,
+      lr = 0.01,
+      dropout = c(0,0),
+      batchnorm = FALSE,
+      epochs = 200,
+      batch.size = 128,
+      valid.pct = 0.2,
+      early.stopping.epochs = 10,
+      print.every.epochs = 10,
+      save.path = file.path(getwd(),"SPQR_model"),
+      save.name = "SPQR.model.pt"
+    )
+  }
+  if (length(control) > 0) {
+    for (i in names(control))
+      default[[i]] <- control[[i]]
+  }
+  invisible(default)
+}
+
 ## torch utils
 nn_SPQR_MLE <- torch::nn_module(
   classname = "nn_SPQR",
@@ -317,7 +406,6 @@ nn_BayesLinear_GSM <- torch::nn_module(
   }
 )
 
-## Initialize parameters for window adaptation
 get.nn.params <- function(fitted.obj){
     a <- fitted.obj$model$parameters
     ffnn_params <- list()

@@ -8,11 +8,11 @@
 SPQR(
   X,
   Y,
-  n.knots = 12,
+  n.knots = 10,
   n.hidden = 10,
   activation = c("tanh", "relu", "sigmoid"),
   method = c("MLE", "MAP", "MCMC"),
-  prior = c("GP", "ARD", "GSM"),
+  prior = c("ARD", "GP", "GSM"),
   hyperpar = list(),
   control = list(),
   normalize = FALSE,

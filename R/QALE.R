@@ -9,7 +9,7 @@
 #'   covariates for which the ALEs will be calculated. When \code{length(var.index)==1},
 #'   the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
 #'   the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.
-#' @param tau The quantiles of interes.
+#' @param tau The quantiles of interest.
 #' @param n.bins  the maximum number of intervals into which the covariate range is divided when
 #'   calculating the ALEs. The actual number of intervals depends on the number of unique values in
 #' \code{X[,var.index]}. When \code{length(var.index)==2}, \code{n.bins} is applied to both covariates.
@@ -26,14 +26,15 @@
 #' @importFrom stats quantile
 #'
 #' @export
-QALE <- function(object, var.index, tau, n.bins = 40, ci.level = 0,
+QALE <- function(object, var.index, tau = seq(0.1,0.9,0.1), n.bins = 40, ci.level = 0,
                  getAll = FALSE, pred.fun = NULL) {
 
   if (!is.null(pred.fun) || object$method != "MCMC") {
     ci.level <- 0
     getAll <- FALSE
   }
-  stopifnot(length(var.index) <= 2)
+  if (length(var.index) > 2)
+    stop("`var.index` should be a vector of length one or two.")
   stopifnot(is.numeric(ci.level))
   if (ci.level < 0 || ci.level >=1) stop("`ci.level` should be between 0 and 1")
   if (ci.level > 0) getAll <- TRUE

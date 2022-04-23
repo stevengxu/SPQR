@@ -7,7 +7,7 @@
 QALE(
   object,
   var.index,
-  tau,
+  tau = seq(0.1, 0.9, 0.1),
   n.bins = 40,
   ci.level = 0,
   getAll = FALSE,
@@ -22,7 +22,7 @@ covariates for which the ALEs will be calculated. When \code{length(var.index)==
 the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
 the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.}
 
-\item{tau}{The quantiles of interes.}
+\item{tau}{The quantiles of interest.}
 
 \item{n.bins}{the maximum number of intervals into which the covariate range is divided when
   calculating the ALEs. The actual number of intervals depends on the number of unique values in
