@@ -8,6 +8,25 @@
 #'
 #' @return A list of size \code{nfold} containing indices of the observations for each fold.
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 1000
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' folds <- createFolds.SPQR(Y, nfold = 5)
+#'
+#' \dontrun{
+#' ## hyperparameter tuning using 5 fold cross-validation
+#' control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
+#' lr.grid <- exp(-5:-3)
+#' cve <- sapply(lr.grid, FUN=function(lr) {
+#' control$lr <- lr
+#' cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+#'                   control=control)
+#' c(lr, cv.out$cve)
+#' })
+#' }
+#'
 #' @export
 createFolds.SPQR <- function(Y, nfold, stratified=FALSE) {
 

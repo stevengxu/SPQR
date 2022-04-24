@@ -65,3 +65,23 @@ Fits SPQR using either MLE or MAP method. Computes K-fold cross-validation error
 based on pre-computed folds. The arguments are mostly the same as in \code{SPQR()}
 except for an additional \code{folds} argument that takes pre-computed CV folds.
 }
+\examples{
+\dontrun{
+set.seed(919)
+n <- 1000
+X <- rbinom(n, 1, 0.5)
+Y <- rnorm(n, X, 0.8)
+folds <- createFolds.SPQR(Y, nfold = 5)
+
+## hyperparameter tuning using 5 fold cross-validation
+control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
+lr.grid <- exp(-5:-3)
+cve <- sapply(lr.grid, FUN=function(lr) {
+control$lr <- lr
+cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+                  control=control)
+c(lr, cv.out$cve)
+})
+}
+
+}

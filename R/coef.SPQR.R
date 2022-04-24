@@ -11,6 +11,15 @@
 #'
 #' @return A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+#' coef(fit, X = 0)
+#'
 #' @export
 coef.SPQR <- function(object, X, ...) {
 

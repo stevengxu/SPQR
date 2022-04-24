@@ -10,6 +10,18 @@
 #'
 #' @import ggplot2
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+#'
+#'
+#' ## Goodness-of-fit test
+#' qqCheck(fit)
+#'
 #' @export
 
 qqCheck <- function(object, getAll = FALSE) {
@@ -73,15 +85,14 @@ qqCheck <- function(object, getAll = FALSE) {
     p <-
       ggplot() +
       geom_abline(intercept=0, slope=1, color="red",size=1.5, linetype=2) +
-      geom_line(data=datt, aes(x=.data$sx, y=.data$sy, group=.data$g), alpha=0.1) +
-      geom_point(data=dat, aes(x=.data$sx, y=.data$my), alpha=0.3, shape=19, size=1)
+      geom_line(data=datt, aes(x=.data$sx, y=.data$sy, group=.data$g), alpha=0.1)
   } else {
     sy <- sort(y)
     dat <- data.frame(sx = sx, sy = sy)
     p <-
       ggplot(dat, aes(x=.data$sx, y=.data$sy)) +
       geom_abline(intercept=0, slope=1, color="red",size=1.5, linetype=2) +
-      geom_point(alpha=0.3, shape=19, size=1)
+      geom_point(shape=19, size=1.2)
   }
   p + theme_bw() + labs(title="Q-Q Plot", x="Theoretical Quantiles", y="Probability integral transform (PIT)") +
     theme(axis.text = element_text(colour="black", size = 12),

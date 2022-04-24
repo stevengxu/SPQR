@@ -68,6 +68,20 @@
 #'
 #' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \href{doi.org/10.1111/biom.13576}{doi:10.1111/biom.13576}
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+#'
+#' ## summarize output
+#' summary(fit)
+#'
+#' ## plot estimated PDF
+#' autoplot(fit, type = "PDF", X = 0)
+#'
 #' @export
 SPQR <-
   function(X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
@@ -83,6 +97,7 @@ SPQR <-
     stop("Very small `n.knots` can lead to severe underfitting, We recommend setting it to at least 5.")
 
   if (is.null(n <- nrow(X))) dim(X) <- c(length(X),1) # 1D matrix case
+  n <- nrow(X)
   if (n == 0) stop("`X` is empty")
   if (!is.matrix(X)) X <- as.matrix(X) # data.frame case
 

@@ -31,6 +31,25 @@
 #'
 #' @importFrom torch `%>%` torch_tensor
 #'
+#' @examples
+#' \dontrun{
+#' set.seed(919)
+#' n <- 1000
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' folds <- createFolds.SPQR(Y, nfold = 5)
+#'
+#' ## hyperparameter tuning using 5 fold cross-validation
+#' control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
+#' lr.grid <- exp(-5:-3)
+#' cve <- sapply(lr.grid, FUN=function(lr) {
+#' control$lr <- lr
+#' cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+#'                   control=control)
+#' c(lr, cv.out$cve)
+#' })
+#' }
+#'
 #' @export
 cv.SPQR <- function(X, Y, folds=NULL, n.knots = 12, n.hidden = 10,
                     activation = c("tanh","relu","sigmoid"), method=c("MLE","MAP"),
@@ -46,6 +65,7 @@ cv.SPQR <- function(X, Y, folds=NULL, n.knots = 12, n.hidden = 10,
     stop("Very small `n.knots` can lead to severe underfitting, We recommend setting it to at least 5.")
 
   if (is.null(n <- nrow(X))) dim(X) <- c(length(X),1) # 1D matrix case
+  n <- nrow(X)
   if (n == 0) stop("`X` is empty")
   if (!is.matrix(X)) X <- as.matrix(X) # data.frame case
 

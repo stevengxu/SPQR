@@ -3,6 +3,7 @@
 #' Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 #'
 #' @method predict SPQR
+#' @name predict.SPQR
 #'
 #' @param object An object of class \code{"SPQR"}.
 #' @param X The covariate vector/matrix for which the predictions are computed.
@@ -18,6 +19,18 @@
 #' @param ... Other arguments.
 #'
 #' @return A named array containing all predicted values.
+#'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+#'
+#' ## compute the estimated PDF of Y conditioned on X = 0
+#' pdf <- predict(fit, type = "PDF", X = 0, Y = seq(0, 1, 0.01))
+#' plot(seq(0, 1, 0.01), pdf, xlab = "Y", ylab = "Density")
 #'
 #' @export
 
@@ -36,6 +49,8 @@ predict.SPQR <- function(object, X, Y = NULL, nY = 101, type = c("QF","PDF","CDF
   if (NCOL(X) != p) {
     if (NROW(X) != p) stop("incompatible dimensions")
     else dim(X) <- c(1,length(X)) # treat vector as single observation
+  } else if (p == 1){
+    dim(X) <- c(length(X),1)
   }
   if (X.normalize) {
     X.range <- object$normalize$X

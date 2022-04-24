@@ -11,6 +11,18 @@
 #'
 #' @return A \code{ggplot} object.
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- runif(n,0,2)
+#' Y <- rnorm(n,X^2,0.3+X/2)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=3, method="MCMC",
+#'             control=control, normalize=TRUE)
+#'
+#' ## compute quantile ALE main effect of X at tau = 0.2,0.5,0.8
+#' plotQALE(fit, var.index=1, tau=c(0.2,0.5,0.8))
+#'
 #' @export
 plotQALE <- function(object, ...) {
 

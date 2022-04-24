@@ -46,3 +46,16 @@ Computes the quantile ALEs of a `SPQR` class object. The function plots the ALE 
 \code{tau} using line plots for a single covariate, and the ALE interaction effects across \code{tau}
 using contour plots for two covariates .
 }
+\examples{
+set.seed(919)
+n <- 200
+X <- runif(n,0,2)
+Y <- rnorm(n,X^2,0.3+X/2)
+control <- list(iter = 300, warmup = 200, thin = 1)
+fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=3, method="MCMC",
+            control=control, normalize=TRUE)
+
+## compute quantile ALE main effect of X at tau = 0.2,0.5,0.8
+ale <- QALE(fit, var.index=1, tau=c(0.2,0.5,0.8))
+
+}

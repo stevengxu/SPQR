@@ -15,6 +15,19 @@
 #'
 #' @import ggplot2
 #'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- matrix(runif(n*2, 0, 2), nrow = n, ncol = 2)
+#' Y <- rnorm(n, X[,1]^2, 0.3+X[,1]/2)
+#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=5, method="MCMC",
+#'             control=control, normalize=TRUE)
+#'
+#' ## compute quantile VI of at tau = 0.2,0.5,0.8
+#' plotQVI(fit, tau=c(0.2,0.5,0.8))
+#'
+#'
 #' @export
 plotQVI <- function(object, var.index = NULL, var.names = NULL, ...) {
 
@@ -32,7 +45,7 @@ plotQVI <- function(object, var.index = NULL, var.names = NULL, ...) {
   if (object$method != "MCMC") ci.level <- 0
   x.ticks <- {}
   if (!is.null(var.names)) x.ticks <- var.names
-  else x.ticks <- parse(text=paste0("X[",var.index,"]"))
+  else x.ticks <- paste0("X[",var.index,"]")
   names(x.ticks) <- var.index
   tauexp <- factor(tau, levels=tau, labels=paste0("tau==",tau))
   if (ci.level == 0) {

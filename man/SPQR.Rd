@@ -92,6 +92,21 @@ An object of class \code{"SPQR"}.
 Main function of the package. Fits SPQR using the maximum likelihood estimation (MLE), maximum \emph{a posterior} (MAP) or
 Markov chain Monte Carlo (MCMC) method. Returns an object of S3 class \code{SPQR}.
 }
+\examples{
+set.seed(919)
+n <- 200
+X <- rbinom(n, 1, 0.5)
+Y <- rnorm(n, X, 0.8)
+control <- list(iter = 300, warmup = 200, thin = 1)
+fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+
+## summarize output
+summary(fit)
+
+## plot estimated PDF
+autoplot(fit, type = "PDF", X = 0)
+
+}
 \references{
 Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \href{doi.org/10.1111/biom.13576}{doi:10.1111/biom.13576}
 }
