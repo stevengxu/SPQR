@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.summary.SPQR.R
 \name{print.summary.SPQR}
 \alias{print.summary.SPQR}
-\title{print method for summary.SPQR}
+\title{print method for \code{"summary.SPQR"}}
 \usage{
 \method{print}{summary.SPQR}(x, showModel = FALSE, ...)
 }

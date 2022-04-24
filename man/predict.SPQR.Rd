@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.SPQR.R
 \name{predict.SPQR}
 \alias{predict.SPQR}
-\title{predict method for class `SPQR`}
+\title{predict method for class \code{"SPQR"}}
 \usage{
 \method{predict}{SPQR}(
   object,

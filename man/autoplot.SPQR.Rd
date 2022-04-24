@@ -2,43 +2,31 @@
 % Please edit documentation in R/autoplot.SPQR.R
 \name{autoplot.SPQR}
 \alias{autoplot.SPQR}
-\title{autoplot method for SPQR}
+\title{autoplot method for class \code{"SPQR"}}
 \usage{
-\method{autoplot}{SPQR}(object, X, ...)
+\method{autoplot}{SPQR}(object, output = c("GOF", "estimator", "trace", "QALE", "QVI"), ...)
 }
 \arguments{
-\item{object}{An object of class \code{SPQR}}
+\item{object}{An object of class \code{"SPQR"}.}
 
-\item{X}{A row vector indicating covariate values for which the conditional PDF/CDF/QF is computed and plotted.}
+\item{output}{A character indicating the type of plot to be returned.
 
-\item{...}{
-  Arguments passed on to \code{\link[=predict.SPQR]{predict.SPQR}}
-  \describe{
-    \item{\code{nY}}{An integer number indicating length of grid when \code{Y} is not specified. Default: 101.}
-    \item{\code{type}}{The function to be predicted; \code{"PDF"}: probability density function,
-\code{"CDF"}: cumulative distribution function, and \code{"QF"}: the quantile function (default).}
-    \item{\code{tau}}{The grid of quantiles for which the quantile function is computed. Default: \code{seq(0.1,0.9,0.1)}.}
-    \item{\code{ci.level}}{The credible level for computing the pointwise credible intervals. The
-default is 0 indicating no credible intervals should be computed.}
-    \item{\code{getAll}}{If \code{TRUE}, extracts all posterior samples of the prediction. Default: \code{FALSE}.}
-  }}
+\itemize{
+  \item "GOF": goodness of fit test by comparing the quantiles of probability integral transform (PIT) to that of uniform distribution.
+  \item "estimator": visualization of various estimates. Including probability density function (PDF), cumulative density function (CDF) and quantile function (QF).
+  \item "trace": diagnostic trace plots for SPQR fitted with \code{method = "MCMC"}.
+  \item "QALE": quantile accumulative local effects (ALE) for visualizing covariate effects on predicted quantiles.
+  \item "QVI": quantile variable importance comparison.
+}}
+
+\item{...}{other arguments, see functions \code{plotEstimator()}, \code{plotGOF()}, \code{plotMCMCtrace()},
+\code{plotQALE()} or \code{plotQVI()} for available arguments.}
 }
 \value{
-A \code{ggplot} object.
+a \code{"ggplot"} object
 }
 \description{
-Computes and plots the estimated PDF/CDF/QF curves.
-}
-\examples{
-set.seed(919)
-n <- 200
-X <- rbinom(n, 1, 0.5)
-Y <- rnorm(n, X, 0.8)
-control <- list(iter = 300, warmup = 200, thin = 1)
-fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
-
-
-## plot estimated PDF
-autoplot(fit, type = "PDF", X = 0)
-
+The function calls one of the following functions:
+\code{plotEstimator()}, \code{plotGOF()}, \code{plotMCMCtrace()},
+\code{plotQALE()}, \code{plotQVI()}
 }

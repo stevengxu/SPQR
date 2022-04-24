@@ -21,4 +21,6 @@ Author: Steven Xu [aut, cre],
   Reetam Majumder [aut],
   Brian Reich [ctb]
 Maintainer: Steven Xu <sgxu@ncsu.edu>
-
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

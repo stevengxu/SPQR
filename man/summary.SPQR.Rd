@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.SPQR.R
 \name{summary.SPQR}
 \alias{summary.SPQR}
-\title{summaary method for SPQR}
+\title{summary method for SPQR}
 \usage{
 \method{summary}{SPQR}(object, ...)
 }

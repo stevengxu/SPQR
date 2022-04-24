@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotQVI.R
 \name{plotQVI}
 \alias{plotQVI}
-\title{Plot quantile ALE-induced variable importance}
+\title{plot variable importance comparison by quantile}
 \usage{
 plotQVI(object, var.index = NULL, var.names = NULL, ...)
 }

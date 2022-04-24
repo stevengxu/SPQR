@@ -2,7 +2,7 @@
 % Please edit documentation in R/QALE.R
 \name{QALE}
 \alias{QALE}
-\title{Quantile accumulated local effects (ALE)}
+\title{quantile accumulated local effects (ALE)}
 \usage{
 QALE(
   object,
@@ -42,7 +42,7 @@ the true model in a simulation study.}
 A named array containing computed quantile ALEs.
 }
 \description{
-Computes the quantile ALEs of a `SPQR` class object. The function plots the ALE main effects across
+Computes the quantile ALEs of a \code{"SPQR"} class object. The function plots the ALE main effects across
 \code{tau} using line plots for a single covariate, and the ALE interaction effects across \code{tau}
 using contour plots for two covariates .
 }

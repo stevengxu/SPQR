@@ -43,7 +43,6 @@ hyperparameters.}
 \item{control}{A list of named and method-dependent parameters that allows finer
  control of the behavior of the computational approaches.
 
-
 1. Parameters for MLE and MAP methods
 
 \itemize{
@@ -104,7 +103,7 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
 summary(fit)
 
 ## plot estimated PDF
-autoplot(fit, type = "PDF", X = 0)
+plotEstimator(fit, type = "PDF", X = 0)
 
 }
 \references{

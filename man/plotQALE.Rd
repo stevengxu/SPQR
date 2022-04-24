@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotQALE.R
 \name{plotQALE}
 \alias{plotQALE}
-\title{Plot accumulated local effects (ALE)}
+\title{plot accumulated local effects (ALE)}
 \usage{
 plotQALE(object, ...)
 }

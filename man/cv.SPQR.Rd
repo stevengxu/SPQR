@@ -2,7 +2,7 @@
 % Please edit documentation in R/cv.SPQR.R
 \name{cv.SPQR}
 \alias{cv.SPQR}
-\title{Cross-validation for SPQR}
+\title{cross-validation for SPQR}
 \usage{
 cv.SPQR(
   X,
