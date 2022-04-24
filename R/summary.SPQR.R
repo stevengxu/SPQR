@@ -1,4 +1,4 @@
-#' @title summaary method for SPQR
+#' @title summary method for SPQR
 #' @description summarizes the output produced by \code{SPQR()} and structures them in a more organized way to be examined by the user.
 #'
 #' @method summary SPQR

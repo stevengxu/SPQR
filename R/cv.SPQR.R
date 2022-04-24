@@ -1,4 +1,4 @@
-#' @title Cross-validation for SPQR
+#' @title cross-validation for SPQR
 #' @description
 #' Fits SPQR using either MLE or MAP method. Computes K-fold cross-validation error
 #' based on pre-computed folds. The arguments are mostly the same as in \code{SPQR()}

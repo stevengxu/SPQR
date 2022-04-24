@@ -1,11 +1,13 @@
 #' @title save fitted SPQR model
 #' @description
-#' save fitted SPQR model in a designated directory
+#' Save \code{"SPQR"} object in a designated directory. If SPQR is fitted with
+#' \code{method = "MCMC"} then only a \code{.SPQR} file is saved; otherwise, a \code{.pt}
+#' file storing the fitted \code{torch} model is also saved.
 #'
 #' @name save.SPQR
 #'
-#' @param object An object of class \code{SPQR}
-#' @param name The name of the saved object excluding extension
+#' @param object An object of class \code{"SPQR"}.
+#' @param name The name of the saved object excluding extension.
 #' @param path The path to save the object. Default is the current working directory.
 #'
 #'

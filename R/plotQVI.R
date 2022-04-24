@@ -1,4 +1,4 @@
-#' @title Plot quantile ALE-induced variable importance
+#' @title plot variable importance comparison by quantile
 #' @description
 #' Computes the quantile ALE-induced variable importance (VI) measure for each of the
 #' covariate specified in var.index, and produces a ranking plot of the covariates using

@@ -1,4 +1,4 @@
-#' @title print method for summary.SPQR
+#' @title print method for \code{"summary.SPQR"}
 #' @description Print the output produced by summary.SPQR().
 #' @name print.summary.SPQR
 #'

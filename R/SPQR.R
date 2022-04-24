@@ -20,7 +20,6 @@
 #' @param control A list of named and method-dependent parameters that allows finer
 #'  control of the behavior of the computational approaches.
 #'
-#'
 #' 1. Parameters for MLE and MAP methods
 #'
 #' \itemize{
@@ -80,7 +79,7 @@
 #' summary(fit)
 #'
 #' ## plot estimated PDF
-#' autoplot(fit, type = "PDF", X = 0)
+#' plotEstimator(fit, type = "PDF", X = 0)
 #'
 #' @export
 SPQR <-
@@ -99,6 +98,9 @@ SPQR <-
   if (is.null(n <- nrow(X))) dim(X) <- c(length(X),1) # 1D matrix case
   n <- nrow(X)
   if (n == 0) stop("`X` is empty")
+  if (sum(is.na(X)) > 0) stop("`X` cannot have missing values")
+  if (!is.numeric(try(sum(X[1,]),silent=TRUE))) stop("`X` cannot have non-numeric values")
+
   if (!is.matrix(X)) X <- as.matrix(X) # data.frame case
 
   ny <- NCOL(Y)
@@ -154,6 +156,7 @@ SPQR.ADAM <- function(X, Y, n.knots, n.hidden, activation, method, prior,
     message('GPU acceleration is available through `use.GPU=TRUE`')
   }
   device <- if (use.GPU) "cuda" else "cpu"
+  control$use.GPU <- use.GPU
 
   if (!is.null(seed)) {
     set.seed(seed)

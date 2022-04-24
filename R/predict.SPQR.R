@@ -1,4 +1,4 @@
-#' @title predict method for class `SPQR`
+#' @title predict method for class \code{"SPQR"}
 #' @description
 #' Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 #'

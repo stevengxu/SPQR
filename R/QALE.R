@@ -1,6 +1,6 @@
-#' @title Quantile accumulated local effects (ALE)
+#' @title quantile accumulated local effects (ALE)
 #' @description
-#' Computes the quantile ALEs of a `SPQR` class object. The function plots the ALE main effects across
+#' Computes the quantile ALEs of a \code{"SPQR"} class object. The function plots the ALE main effects across
 #' \code{tau} using line plots for a single covariate, and the ALE interaction effects across \code{tau}
 #' using contour plots for two covariates .
 #'

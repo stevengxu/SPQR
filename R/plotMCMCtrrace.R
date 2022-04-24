@@ -25,12 +25,14 @@
 #' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
 #'
 #' ## traceplot for log-likelihood
-#' mcmcTrace(fit, target = "loglik")
+#' plotMCMCtrace(fit, target = "loglik")
 #'
 #'
 #' @export
-mcmcTrace <- function(object, target = c("loglik","PDF","CDF","QF"),
-                      X = NULL, Y = NULL, tau = 0.5, window = NULL) {
+plotMCMCtrace <- function(object, target = c("loglik","PDF","CDF","QF"),
+                          X = NULL, Y = NULL, tau = 0.5, window = NULL) {
+  if (object$method != "MCMC")
+    stop("trace plot is only available for SPQR fitted with `method=\"MCMC\"`")
   target <- match.arg(target)
   divergent <- object$chain.info$divergent
   if (!is.null(window)) {

@@ -27,6 +27,8 @@ coef.SPQR <- function(object, X, ...) {
   if (NCOL(X) != p) {
     if (NROW(X) != p) stop("incompatible dimensions")
     else dim(X) <- c(1,length(X)) # treat vector as single observation
+  } else if (p == 1){
+    dim(X) <- c(length(X),1)
   }
   if (!is.null(object$normalize)) {
     X.range <- object$normalize$X

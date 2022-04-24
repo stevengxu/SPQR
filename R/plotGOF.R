@@ -1,4 +1,4 @@
-#' @title Goodness-of-fit test for SPQR estimator
+#' @title goodness-of-fit test for SPQR estimator
 #' @description
 #' Performs a goodness-of-fit test for the estimated conditional probability density function (PDF) using
 #' inverse transformation method.
@@ -20,11 +20,11 @@
 #'
 #'
 #' ## Goodness-of-fit test
-#' qqCheck(fit)
+#' plotGOF(fit)
 #'
 #' @export
 
-qqCheck <- function(object, getAll = FALSE) {
+plotGOF <- function(object, getAll = FALSE) {
 
   X <- object$X; Y <- object$Y
   p <- NCOL(X)
