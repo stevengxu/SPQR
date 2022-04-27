@@ -5,7 +5,7 @@
 #' @name cv.SPQR
 #'
 #' @param folds A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.
-#' @inheritDotParams SPQR
+#' @inheritParams SPQR
 #'
 #' @return
 #' \item{control}{the list of all control parameters.}
@@ -27,14 +27,16 @@
 #' lr.grid <- exp(-5:-3)
 #' cve <- sapply(lr.grid, FUN=function(lr) {
 #' control$lr <- lr
-#' cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+#' cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
 #'                   control=control)
 #' c(lr, cv.out$cve)
 #' })
 #' }
 #'
 #' @export
-cv.SPQR <- function(folds=NULL, ...)
+cv.SPQR <- function(folds, X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
+                    method=c("MLE","MAP","MCMC"), prior=c("ARD","GP","GSM"), hyperpar=list(),
+                    control=list(), normalize = FALSE, verbose = TRUE, seed = NULL, ...)
 {
 
   activation <- match.arg(activation)

@@ -4,25 +4,45 @@
 \alias{cv.SPQR}
 \title{cross-validation for SPQR estimator}
 \usage{
-cv.SPQR(folds = NULL, ...)
+cv.SPQR(
+  folds,
+  X,
+  Y,
+  n.knots = 10,
+  n.hidden = 10,
+  activation = c("tanh", "relu", "sigmoid"),
+  method = c("MLE", "MAP", "MCMC"),
+  prior = c("ARD", "GP", "GSM"),
+  hyperpar = list(),
+  control = list(),
+  normalize = FALSE,
+  verbose = TRUE,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
 \item{folds}{A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.}
 
-\item{...}{
-  Arguments passed on to \code{\link[=SPQR]{SPQR}}
-  \describe{
-    \item{\code{X}}{The covariate matrix (without intercept column)}
-    \item{\code{Y}}{The response vector.}
-    \item{\code{n.knots}}{The number of basis functions. Default: 10.}
-    \item{\code{n.hidden}}{A vector specifying the number of hidden neurons in each hidden layer. Default: 10.}
-    \item{\code{activation}}{The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.}
-    \item{\code{method}}{Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.}
-    \item{\code{prior}}{The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.}
-    \item{\code{hyperpar}}{A list of named hyper-prior hyperparameters to use instead of the default values, including
+\item{X}{The covariate matrix (without intercept column)}
+
+\item{Y}{The response vector.}
+
+\item{n.knots}{The number of basis functions. Default: 10.}
+
+\item{n.hidden}{A vector specifying the number of hidden neurons in each hidden layer. Default: 10.}
+
+\item{activation}{The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.}
+
+\item{method}{Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.}
+
+\item{prior}{The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.}
+
+\item{hyperpar}{A list of named hyper-prior hyperparameters to use instead of the default values, including
 \code{a_lambda}, \code{b_lambda}, \code{a_sigma} and \code{b_sigma}. The default value is 0.001 for all four
 hyperparameters.}
-    \item{\code{control}}{A list of named and method-dependent parameters that allows finer
+
+\item{control}{A list of named and method-dependent parameters that allows finer
  control of the behavior of the computational approaches.
 
 1. Parameters for MLE and MAP methods
@@ -57,10 +77,14 @@ the Stan reference manual.
   \item \code{max.treedepth} The maximum tree depth in NUTS. Default: 6.
   \item \code{int.time} The integration time in HMC. The number of leap-frog steps is calculated as \eqn{L_{\epsilon}=\lfloor t/\epsilon\rfloor}. Default: 0.3.
 }}
-    \item{\code{normalize}}{If \code{TRUE}, all covariates will be normalized to take values between [0,1].}
-    \item{\code{verbose}}{If \code{TRUE} (default), training progress will be printed.}
-    \item{\code{seed}}{Random number generation seed.}
-  }}
+
+\item{normalize}{If \code{TRUE}, all covariates will be normalized to take values between [0,1].}
+
+\item{verbose}{If \code{TRUE} (default), training progress will be printed.}
+
+\item{seed}{Random number generation seed.}
+
+\item{...}{other parameters to pass to \code{control}.}
 }
 \value{
 \item{control}{the list of all control parameters.}
@@ -84,7 +108,7 @@ control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
 lr.grid <- exp(-5:-3)
 cve <- sapply(lr.grid, FUN=function(lr) {
 control$lr <- lr
-cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
                   control=control)
 c(lr, cv.out$cve)
 })
