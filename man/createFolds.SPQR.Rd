@@ -32,7 +32,7 @@ control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
 lr.grid <- exp(-5:-3)
 cve <- sapply(lr.grid, FUN=function(lr) {
 control$lr <- lr
-cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
+cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
                   control=control, verbose = FALSE)
 c(lr, cv.out$cve)
 })
