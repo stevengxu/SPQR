@@ -1,6 +1,8 @@
 ## R CMD　check results
 There were no ERRORs or WARNINGs or NOTEs.
 
+This is my first submission.
+
    Examples with CPU (user + system) or elapsed time > 5s
                       user system elapsed
    plotEstimator      9.60   2.67    7.00
