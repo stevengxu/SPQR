@@ -65,7 +65,7 @@
 #' @importFrom stats rgamma
 #' @importFrom progressr handlers progressor
 #'
-#' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \href{doi.org/10.1111/biom.13576}{doi:10.1111/biom.13576}
+#' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \doi{10.1111/biom.13576}
 #'
 #' @examples
 #' \dontrun{
