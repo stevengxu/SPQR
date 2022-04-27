@@ -13,16 +13,16 @@ plotQALE(object, ...)
   Arguments passed on to \code{\link[=QALE]{QALE}}
   \describe{
     \item{\code{var.index}}{a numeric scalar or length-two vector of indices of the
-covariates for which the ALEs will be calculated. When \code{length(var.index)==1},
-the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index)==2},
+covariates for which the ALEs will be calculated. When \code{length(var.index) = 1},
+the function computes the main effect for \code{X[,var.index]}. When \code{length(var.index) = 2},
 the function computes the interaction effect between \code{X[,var.index[1]]} and \code{X[,var.index[2]]}.}
     \item{\code{tau}}{The quantiles of interest.}
     \item{\code{n.bins}}{the maximum number of intervals into which the covariate range is divided when
   calculating the ALEs. The actual number of intervals depends on the number of unique values in
-\code{X[,var.index]}. When \code{length(var.index)==2}, \code{n.bins} is applied to both covariates.}
+\code{X[,var.index]}. When \code{length(var.index) = 2}, \code{n.bins} is applied to both covariates.}
     \item{\code{ci.level}}{The credible level for computing the pointwise credible intervals for ALE
-when \code{length(var.index)==1}. The default is 0 indicating no credible intervals should be computed.}
-    \item{\code{getAll}}{If \code{TRUE} and \code{length(var.index)==1}, extracts all posterior samples of ALE.}
+when \code{length(var.index) = 1}. The default is 0 indicating no credible intervals should be computed.}
+    \item{\code{getAll}}{If \code{TRUE} and \code{length(var.index) = 1}, extracts all posterior samples of ALE.}
     \item{\code{pred.fun}}{A function that will be used instead of \code{predict.SPQR()}
 for computing predicted quantiles given covariates. This can be useful when the user wants to compare
 the QALE calculated using SPQR to that using other quantile regression models, or maybe that using
@@ -42,7 +42,7 @@ set.seed(919)
 n <- 200
 X <- runif(n,0,2)
 Y <- rnorm(n,X^2,0.3+X/2)
-control <- list(iter = 300, warmup = 200, thin = 1)
+control <- list(iter = 200, warmup = 150, thin = 1)
 fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=3, method="MCMC",
             control=control, normalize=TRUE)
 

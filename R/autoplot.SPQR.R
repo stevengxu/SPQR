@@ -25,6 +25,19 @@ ggplot2::autoplot
 #' \code{\link[=plotQALE]{plotQALE()}} or \code{\link[=plotQVI]{plotQVI()}} for required arguments.
 #'
 #' @return a \code{ggplot} object
+#'
+#' @examples
+#' set.seed(919)
+#' n <- 200
+#' X <- rbinom(n, 1, 0.5)
+#' Y <- rnorm(n, X, 0.8)
+#' control <- list(iter = 200, warmup = 150, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
+#'             normalize = TRUE, verbose = FALSE)
+#'
+#' ## Goodness-of-fit test
+#' autoplot(fit, output = "GOF")
+#'
 #' @export
 autoplot.SPQR <- function(object, output=c("GOF","estimator","trace","QALE","QVI"), ...) {
   output <- match.arg(output)

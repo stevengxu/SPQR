@@ -109,7 +109,7 @@ lr.grid <- exp(-5:-3)
 cve <- sapply(lr.grid, FUN=function(lr) {
 control$lr <- lr
 cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-                  control=control)
+                  control=control, verbose = FALSE)
 c(lr, cv.out$cve)
 })
 }

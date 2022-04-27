@@ -30,3 +30,16 @@ The function calls one of the following functions:
 \code{\link[=plotEstimator]{plotEstimator()}}, \code{\link[=plotGOF]{plotGOF()}}, \code{\link[=plotMCMCtrace]{plotMCMCtrace()}},
 \code{\link[=plotQALE]{plotQALE()}}, \code{\link[=plotQVI]{plotQVI()}}
 }
+\examples{
+set.seed(919)
+n <- 200
+X <- rbinom(n, 1, 0.5)
+Y <- rnorm(n, X, 0.8)
+control <- list(iter = 200, warmup = 150, thin = 1)
+fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
+            normalize = TRUE, verbose = FALSE)
+
+## Goodness-of-fit test
+autoplot(fit, output = "GOF")
+
+}

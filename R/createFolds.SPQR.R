@@ -22,7 +22,7 @@
 #' cve <- sapply(lr.grid, FUN=function(lr) {
 #' control$lr <- lr
 #' cv.out <- cv.SPQR(X=X, Y=Y, folds=folds, method="MLE",
-#'                   control=control)
+#'                   control=control, verbose = FALSE)
 #' c(lr, cv.out$cve)
 #' })
 #' }

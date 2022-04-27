@@ -18,7 +18,7 @@
 #' n <- 200
 #' X <- runif(n,0,2)
 #' Y <- rnorm(n,X^2,0.3+X/2)
-#' control <- list(iter = 300, warmup = 200, thin = 1)
+#' control <- list(iter = 200, warmup = 150, thin = 1)
 #' fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=3, method="MCMC",
 #'             control=control, normalize=TRUE)
 #'
@@ -99,7 +99,7 @@ plotQALE <- function(object, ...) {
     xygrid <- expand.grid(x=ale$x[[1]],y=ale$x[[2]])
     df <- do.call(rbind,lapply(seq_along(tau),function(i){
       xygrid$z <- as.vector(ale$ALE[,,i])
-      fld <- with(xygrid, akima::interp(x=x, y=y, z=z))
+      fld <- with(xygrid, interp::interp(x=x, y=y, z=z))
       out <- expand.grid(x=fld$x, y=fld$y)
       out$z <- c(fld$z)
       out$tauexp <- rep(tauexp[i],nrow(out))
@@ -108,9 +108,9 @@ plotQALE <- function(object, ...) {
     p <- ggplot(data=df, aes(x=.data$x,y=.data$y)) +
       theme_bw() +
       geom_raster(aes(fill=.data$z)) +
-      geom_contour(aes(z=.data$z),colour="black") +
+      geom_contour(aes(z=.data$z),colour="black",na.rm=TRUE) +
       scale_fill_gradientn(colors=rev(RColorBrewer::brewer.pal(10,"Spectral")),
-                           name=parse(text="ALE"), limits=yrange) +
+                           name=parse(text="ALE"), limits=yrange, na.value="gray") +
       facet_wrap(~tauexp, labeller=label_parsed) +
       labs(x=x.label[1], y=x.label[2]) +
       theme(panel.grid.major=element_blank(),

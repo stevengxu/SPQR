@@ -17,7 +17,7 @@
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
 #' Y <- rnorm(n, X, 0.8)
-#' fit <- SPQR(X = X, Y = Y, method = "MLE", normalize = TRUE)
+#' fit <- SPQR(X = X, Y = Y, method = "MLE", normalize = TRUE, verbose = FALSE)
 #' save.SPQR(fit, name = "SPQR_MLE")
 #' }
 #'

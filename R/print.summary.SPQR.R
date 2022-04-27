@@ -13,8 +13,9 @@
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
 #' Y <- rnorm(n, X, 0.8)
-#' control <- list(iter = 300, warmup = 200, thin = 1)
-#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control, normalize = TRUE)
+#' control <- list(iter = 200, warmup = 150, thin = 1)
+#' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
+#'             normalize = TRUE, verbose = FALSE)
 #'
 #' ## summarize output
 #' summary(fit)
