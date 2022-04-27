@@ -85,7 +85,7 @@ the Stan reference manual.
 \item{...}{other parameters to pass to \code{control}.}
 }
 \value{
-An object of class \code{"SPQR"}.
+An object of class \code{SPQR}.
 }
 \description{
 Main function of the package. Fits SPQR using the maximum likelihood estimation (MLE), maximum \emph{a posterior} (MAP) or

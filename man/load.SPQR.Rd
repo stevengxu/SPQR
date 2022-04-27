@@ -12,14 +12,14 @@ load.SPQR(name = stop("`name` must be specified"), path = NULL)
 \item{path}{The path to look for the saved object. Default is the current working directory.}
 }
 \value{
-An object of class \code{"SPQR"}.
+An object of class \code{SPQR}.
 }
 \description{
 Load saved SPQR model from a designated path. The function first loads
-the \code{.SPQR} file that stores the \code{"SPQR"} object. It then checks
+the \code{.SPQR} file that stores the \code{SPQR} object. It then checks
 whether the SPQR model is fitted with \code{method = "MCMC"}. If not, it also
 loads the \code{.pt} file storing the \code{torch} model with the same \code{name}
-and attach it to the \code{"SPQR"} object.
+and attach it to the \code{SPQR} object.
 }
 \examples{
 \dontrun{

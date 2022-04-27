@@ -2,68 +2,74 @@
 % Please edit documentation in R/cv.SPQR.R
 \name{cv.SPQR}
 \alias{cv.SPQR}
-\title{cross-validation for SPQR}
+\title{cross-validation for SPQR estimator}
 \usage{
-cv.SPQR(
-  X,
-  Y,
-  folds = NULL,
-  n.knots = 12,
-  n.hidden = 10,
-  activation = c("tanh", "relu", "sigmoid"),
-  method = c("MLE", "MAP"),
-  prior = c("GP", "ARD", "GSM"),
-  hyperpar = list(),
-  control = list(),
-  normalize = FALSE,
-  verbose = TRUE,
-  seed = NULL,
-  ...
-)
+cv.SPQR(folds = NULL, ...)
 }
 \arguments{
-\item{X}{The covariate matrix (without intercept column)}
-
-\item{Y}{The response vector.}
-
 \item{folds}{A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.}
 
-\item{n.knots}{The number of basis functions. Default: 10.}
-
-\item{n.hidden}{A vector specifying the number of hidden neurons in each hidden layer. Default: 10.}
-
-\item{activation}{The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.}
-
-\item{method}{Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.}
-
-\item{prior}{The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.}
-
-\item{hyperpar}{A list of named hyper-prior hyperparameters to use instead of the default values, including
+\item{...}{
+  Arguments passed on to \code{\link[=SPQR]{SPQR}}
+  \describe{
+    \item{\code{X}}{The covariate matrix (without intercept column)}
+    \item{\code{Y}}{The response vector.}
+    \item{\code{n.knots}}{The number of basis functions. Default: 10.}
+    \item{\code{n.hidden}}{A vector specifying the number of hidden neurons in each hidden layer. Default: 10.}
+    \item{\code{activation}}{The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.}
+    \item{\code{method}}{Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.}
+    \item{\code{prior}}{The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.}
+    \item{\code{hyperpar}}{A list of named hyper-prior hyperparameters to use instead of the default values, including
 \code{a_lambda}, \code{b_lambda}, \code{a_sigma} and \code{b_sigma}. The default value is 0.001 for all four
 hyperparameters.}
+    \item{\code{control}}{A list of named and method-dependent parameters that allows finer
+ control of the behavior of the computational approaches.
 
-\item{control}{A list of named and method-dependent parameters that allows finer
-control of the behavior of the computational approaches. See \code{SPQR()} for all available
-parameters and their default values.}
+1. Parameters for MLE and MAP methods
 
-\item{normalize}{If \code{TRUE}, all covariates will be normalized to take values between [0,1].}
+\itemize{
+  \item \code{use.GPU} If \code{TRUE} GPU computing will be used if \code{torch::cuda_is_available()} returns \code{TRUE}. Default: \code{FALSE}.
+  \item \code{lr} The learning rate used by the Adam optimizer, i.e., \code{torch::optim_adam()}.
+  \item \code{dropout} A length two vector specifying the dropout probabilities in the input and hidden layers respectively. The default is \code{c(0,0)} indicating no dropout.
+  \item \code{batchnorm} If \code{TRUE} batch normalization will be used after each hidden activation.
+  \item \code{epochs} The number of passes of the entire training dataset in gradient descent optimization. If \code{early.stopping.epochs} is used then this is the maximum number of passes. Default: 200.
+  \item \code{batch.size} The size of mini batches for gradient calculation. Default: 128.
+  \item \code{valid.pct} The fraction of data used as validation set. Default: 0.2.
+  \item \code{early.stopping.epochs} The number of epochs before stopping if the validation loss does not decrease. Default: 10.
+  \item \code{print.every.epochs} The number of epochs before next training progress in printed. Default: 10.
+  \item \code{save.path} The path to save the fitted torch model. By default a folder named \code{"SPQR_model"} is created in the current working directory to store the model.
+  \item \code{save.name} The name of the file to save the fitted torch model. Default is \code{"SPQR.model.pt"}.
+}
 
-\item{verbose}{If \code{TRUE} (default), training progress will be printed.}
+2. Parameters for MCMC method
 
-\item{seed}{Random number generation seed.}
+These parameters are similar to those in \code{rstan::stan()}. Detailed explanations can be found in
+the Stan reference manual.
 
-\item{...}{other parameters to pass to \code{control}.}
+\itemize{
+  \item \code{algorithm} The sampling algorithm; \code{"HMC"}: Hamiltonian Monte Carlo with dual-averaging, \code{"NUTS"}: No-U-Turn sampler (default).
+  \item \code{iter} The number of MCMC iterations (including warmup). Default: 2000.
+  \item \code{warmup} The number of warm-up/burn-in iterations for step-size and mass matrix adaptation. Default: 500.
+  \item \code{thin} The number of iterations before saving next post-warmup samples. Default: 1.
+  \item \code{stepsize} The discretization interval/step-size \eqn{\epsilon} of leap-frog integrator. Default is \code{NULL} which indicates that it will be adaptively selected during warm-up iterations.
+  \item \code{metric} The type of mass matrix; \code{"unit"}: diagonal matrix of ones, \code{"diag"}: diagonal matrix with positive diagonal entries estimated during warmup iterations (default), \code{"dense"}: a dense, symmetric positive definite matrix with entries estimated during warm-up iterations.
+  \item \code{delta} The target Metropolis acceptance rate. Default: 0.9.
+  \item \code{max.treedepth} The maximum tree depth in NUTS. Default: 6.
+  \item \code{int.time} The integration time in HMC. The number of leap-frog steps is calculated as \eqn{L_{\epsilon}=\lfloor t/\epsilon\rfloor}. Default: 0.3.
+}}
+    \item{\code{normalize}}{If \code{TRUE}, all covariates will be normalized to take values between [0,1].}
+    \item{\code{verbose}}{If \code{TRUE} (default), training progress will be printed.}
+    \item{\code{seed}}{Random number generation seed.}
+  }}
 }
 \value{
-A named list including the following components:
 \item{control}{the list of all control parameters.}
 \item{cve}{the cross-validation error.}
 \item{folds}{the CV folds.}
 }
 \description{
-Fits SPQR using either MLE or MAP method. Computes K-fold cross-validation error
-based on pre-computed folds. The arguments are mostly the same as in \code{SPQR()}
-except for an additional \code{folds} argument that takes pre-computed CV folds.
+Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error
+based on pre-computed folds.
 }
 \examples{
 \dontrun{

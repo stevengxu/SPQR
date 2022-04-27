@@ -1,30 +1,13 @@
-#' @title cross-validation for SPQR
+#' @title cross-validation for SPQR estimator
 #' @description
-#' Fits SPQR using either MLE or MAP method. Computes K-fold cross-validation error
-#' based on pre-computed folds. The arguments are mostly the same as in \code{SPQR()}
-#' except for an additional \code{folds} argument that takes pre-computed CV folds.
+#' Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error
+#' based on pre-computed folds.
+#' @name cv.SPQR
 #'
-#'
-#' @param X The covariate matrix (without intercept column)
-#' @param Y The response vector.
 #' @param folds A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.
-#' @param n.knots The number of basis functions. Default: 10.
-#' @param n.hidden A vector specifying the number of hidden neurons in each hidden layer. Default: 10.
-#' @param activation The hidden layer activation. Either \code{"tanh"} (default) or \code{"relu"}.
-#' @param method Method for estimating SPQR. One of \code{"MLE"}, \code{"MAP"} (default) or \code{"MCMC"}.
-#' @param prior The prior model for variance hyperparameters. One of \code{"GP"}, \code{"ARD"} (default) or \code{"GSM"}.
-#' @param hyperpar A list of named hyper-prior hyperparameters to use instead of the default values, including
-#'   \code{a_lambda}, \code{b_lambda}, \code{a_sigma} and \code{b_sigma}. The default value is 0.001 for all four
-#'   hyperparameters.
-#' @param control A list of named and method-dependent parameters that allows finer
-#'  control of the behavior of the computational approaches. See \code{SPQR()} for all available
-#'  parameters and their default values.
-#' @param normalize If \code{TRUE}, all covariates will be normalized to take values between [0,1].
-#' @param verbose If \code{TRUE} (default), training progress will be printed.
-#' @param seed Random number generation seed.
-#' @param ... other parameters to pass to \code{control}.
+#' @inheritDotParams SPQR
 #'
-#' @return A named list including the following components:
+#' @return
 #' \item{control}{the list of all control parameters.}
 #' \item{cve}{the cross-validation error.}
 #' \item{folds}{the CV folds.}
@@ -51,10 +34,7 @@
 #' }
 #'
 #' @export
-cv.SPQR <- function(X, Y, folds=NULL, n.knots = 12, n.hidden = 10,
-                    activation = c("tanh","relu","sigmoid"), method=c("MLE","MAP"),
-                    prior=c("GP","ARD","GSM"), hyperpar=list(), control=list(),
-                    normalize = FALSE, verbose = TRUE, seed = NULL, ...)
+cv.SPQR <- function(folds=NULL, ...)
 {
 
   activation <- match.arg(activation)

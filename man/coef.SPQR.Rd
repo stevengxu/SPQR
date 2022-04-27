@@ -2,7 +2,7 @@
 % Please edit documentation in R/coef.SPQR.R
 \name{coef.SPQR}
 \alias{coef.SPQR}
-\title{coef method for class `SPQR`}
+\title{coef method for class \code{SPQR}}
 \usage{
 \method{coef}{SPQR}(object, X, ...)
 }
@@ -17,7 +17,7 @@
 A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
 }
 \description{
-Computes the estimated spline coefficients of a `SPQR` class object
+Computes the estimated spline coefficients of a \code{SPQR} class object
 }
 \examples{
 set.seed(919)

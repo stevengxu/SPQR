@@ -58,7 +58,7 @@
 #' @param seed Random number generation seed.
 #' @param ... other parameters to pass to \code{control}.
 #'
-#' @return An object of class \code{"SPQR"}.
+#' @return An object of class \code{SPQR}.
 #'
 #'
 #' @importFrom torch `%>%` torch_tensor

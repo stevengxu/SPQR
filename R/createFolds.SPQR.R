@@ -4,7 +4,7 @@
 #'
 #' @param Y The response vector.
 #' @param nfold The number of cross-validation folds.
-#' @param stratified If \code{TRUE}, stratified folds based on quantiles of `Y` are generated.
+#' @param stratified If \code{TRUE}, stratified folds based on quantiles of \code{Y} are generated.
 #'
 #' @return A list of size \code{nfold} containing indices of the observations for each fold.
 #'

@@ -11,7 +11,7 @@ createFolds.SPQR(Y, nfold, stratified = FALSE)
 
 \item{nfold}{The number of cross-validation folds.}
 
-\item{stratified}{If \code{TRUE}, stratified folds based on quantiles of `Y` are generated.}
+\item{stratified}{If \code{TRUE}, stratified folds based on quantiles of \code{Y} are generated.}
 }
 \value{
 A list of size \code{nfold} containing indices of the observations for each fold.

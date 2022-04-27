@@ -1,10 +1,11 @@
 #' @title goodness-of-fit test for SPQR estimator
 #' @description
 #' Performs a goodness-of-fit test for the estimated conditional probability density function (PDF) using
-#' inverse transformation method.
+#' probability inverse transformation method.
+#' @name plotGOF
 #'
-#' @param object An object of class \code{"SPQR"}.
-#' @param getAll If \code{TRUE} and \code{object$method == "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.
+#' @param object An object of class \code{SPQR}.
+#' @param getAll If \code{TRUE} and SPQR is fitted with \code{method = "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.
 #'
 #' @return A \code{ggplot} object.
 #'
@@ -23,7 +24,6 @@
 #' plotGOF(fit)
 #'
 #' @export
-
 plotGOF <- function(object, getAll = FALSE) {
 
   X <- object$X; Y <- object$Y

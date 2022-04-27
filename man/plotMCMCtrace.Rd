@@ -22,7 +22,7 @@ plotMCMCtrace(
 
 \item{X}{If \code{target != "loglik"}, a row vector specifying the covariate values for which the estimates are computed. Default: \code{NULL}.}
 
-\item{Y}{If \code{target == "PDF" || target == "CDF"} a scalar specifying the response value for which the estimates are computed. Default: \code{NULL}.}
+\item{Y}{If \code{target = "PDF"} or \code{target = "CDF"} a scalar specifying the response value for which the estimates are computed. Default: \code{NULL}.}
 
 \item{tau}{If \code{target != "QF"}, a scalar specifying the quantile level for which the estimates are computed. Default: 0.5.}
 

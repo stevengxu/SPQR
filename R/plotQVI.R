@@ -4,7 +4,9 @@
 #' covariate specified in var.index, and produces a ranking plot of the covariates using
 #' bar plot for each quantile of interest.
 #'
-#' @param object An object of class \code{"SPQR"}.
+#' @name plotQVI
+#'
+#' @param object An object of class \code{SPQR}.
 #' @param var.index A vector specifying the index of the covariates for which VI measures should be computed.
 #'   Default is \code{NULL} indicating all covariates are considered.
 #' @param var.names The names of the covariates to appear in the bar plots. Default is \code{NULL} and the

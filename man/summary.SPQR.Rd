@@ -2,17 +2,17 @@
 % Please edit documentation in R/summary.SPQR.R
 \name{summary.SPQR}
 \alias{summary.SPQR}
-\title{summary method for SPQR}
+\title{summary method for class \code{SPQR}}
 \usage{
 \method{summary}{SPQR}(object, ...)
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{...}{Other arguments.}
 }
 \value{
-An object of class \code{"summary.SPQR"}.
+An object of class \code{summary.SPQR}.
 }
 \description{
 summarizes the output produced by \code{SPQR()} and structures them in a more organized way to be examined by the user.

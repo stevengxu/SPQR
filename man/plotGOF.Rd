@@ -7,16 +7,16 @@
 plotGOF(object, getAll = FALSE)
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
-\item{getAll}{If \code{TRUE} and \code{object$method == "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.}
+\item{getAll}{If \code{TRUE} and SPQR is fitted with \code{method = "MCMC"}, plots all posterior samples of Q-Q lines. Default: \code{FALSE}.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
 Performs a goodness-of-fit test for the estimated conditional probability density function (PDF) using
-inverse transformation method.
+probability inverse transformation method.
 }
 \examples{
 set.seed(919)

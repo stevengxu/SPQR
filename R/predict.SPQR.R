@@ -1,11 +1,11 @@
-#' @title predict method for class \code{"SPQR"}
+#' @title predict method for class \code{SPQR}
 #' @description
 #' Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 #'
 #' @method predict SPQR
 #' @name predict.SPQR
 #'
-#' @param object An object of class \code{"SPQR"}.
+#' @param object An object of class \code{SPQR}.
 #' @param X The covariate vector/matrix for which the predictions are computed.
 #' @param Y The response vector for which the predictions are computed. Default is \code{NULL}
 #'   indicating that a equi-distant grid vector on [0,1] of length \code{nY} is used.

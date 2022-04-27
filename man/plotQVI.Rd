@@ -7,7 +7,7 @@
 plotQVI(object, var.index = NULL, var.names = NULL, ...)
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{var.index}{A vector specifying the index of the covariates for which VI measures should be computed.
 Default is \code{NULL} indicating all covariates are considered.}

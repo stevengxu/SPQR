@@ -7,7 +7,7 @@
 plotEstimator(object, X, ...)
 }
 \arguments{
-\item{object}{An object of class \code{SPQR}}
+\item{object}{An object of class \code{"SPQR"}}
 
 \item{X}{A row vector indicating covariate values for which the conditional PDF/CDF/QF is computed and plotted.}
 

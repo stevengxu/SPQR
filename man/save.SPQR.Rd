@@ -7,14 +7,14 @@
 save.SPQR(object, name = stop("`name` must be specified"), path = NULL)
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{name}{The name of the saved object excluding extension.}
 
 \item{path}{The path to save the object. Default is the current working directory.}
 }
 \description{
-Save \code{"SPQR"} object in a designated directory. If SPQR is fitted with
+Save \code{SPQR} object in a designated directory. If SPQR is fitted with
 \code{method = "MCMC"} then only a \code{.SPQR} file is saved; otherwise, a \code{.pt}
 file storing the fitted \code{torch} model is also saved.
 }

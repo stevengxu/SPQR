@@ -15,7 +15,7 @@ QALE(
 )
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{var.index}{a numeric scalar or length-two vector of indices of the
 covariates for which the ALEs will be calculated. When \code{length(var.index)==1},
@@ -39,10 +39,20 @@ the QALE calculated using SPQR to that using other quantile regression models, o
 the true model in a simulation study.}
 }
 \value{
-A named array containing computed quantile ALEs.
+\item{x}{If \code{length(var.index) = 1}, a \code{(n.bins+1)}-length vector specifying the ordered
+predictor values at which the ALE plot function is calculated. These are the break points for
+the \code{n.bins} intervals into which the predictor range is divided, plus the lower boundary of the first
+interval and the upper boundary of the last interval. If \code{length(var.index) = 2}, a list of two
+such vectors, the first containing the \code{X[,var.index[1]]} values and the second containing
+the \code{X[,var.index[2]]} values at which the ALE plot function is calculated.}
+
+\item{ALE}{If \code{length(var.index) = 1}, a \code{(n.bins+1)} by \code{length(tau)} matrix of predicted
+ALE values for every combination of \code{x} and \code{tau}. If \code{length(var.index) = 2}, a 3-dimensional array
+of predicted ALE values. Each slice corresponds to a quantile. Within each slice, the rows correspond to
+\code{X[,var.index[1]]} and the columns correspond to \code{X[,var.index[2]]}.}
 }
 \description{
-Computes the quantile ALEs of a \code{"SPQR"} class object. The function plots the ALE main effects across
+Computes the quantile ALEs of a \code{SPQR} class object. The function plots the ALE main effects across
 \code{tau} using line plots for a single covariate, and the ALE interaction effects across \code{tau}
 using contour plots for two covariates .
 }

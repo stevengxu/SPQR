@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.SPQR.R
 \name{print.SPQR}
 \alias{print.SPQR}
-\title{print method for SPQR}
+\title{print method for class \code{SPQR}}
 \usage{
 \method{print}{SPQR}(x, ...)
 }

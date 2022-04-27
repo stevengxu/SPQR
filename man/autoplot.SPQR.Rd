@@ -2,31 +2,31 @@
 % Please edit documentation in R/autoplot.SPQR.R
 \name{autoplot.SPQR}
 \alias{autoplot.SPQR}
-\title{autoplot method for class \code{"SPQR"}}
+\title{autoplot method for class \code{SPQR}}
 \usage{
 \method{autoplot}{SPQR}(object, output = c("GOF", "estimator", "trace", "QALE", "QVI"), ...)
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{output}{A character indicating the type of plot to be returned.
 
 \itemize{
-  \item "GOF": goodness of fit test by comparing the quantiles of probability integral transform (PIT) to that of uniform distribution.
-  \item "estimator": visualization of various estimates. Including probability density function (PDF), cumulative density function (CDF) and quantile function (QF).
-  \item "trace": diagnostic trace plots for SPQR fitted with \code{method = "MCMC"}.
-  \item "QALE": quantile accumulative local effects (ALE) for visualizing covariate effects on predicted quantiles.
-  \item "QVI": quantile variable importance comparison.
+  \item \code{"GOF"}: goodness of fit test by comparing the quantiles of probability integral transform (PIT) to that of uniform distribution.
+  \item \code{"estimator"}: visualization of various estimates, including probability density function (PDF), cumulative density function (CDF) and quantile function (QF).
+  \item \code{"trace"}: diagnostic trace plots for SPQR fitted with \code{method = "MCMC"}.
+  \item \code{"QALE"}: quantile accumulative local effects (ALE) for visualizing covariate effects on predicted quantiles.
+  \item \code{"QVI"}: quantile variable importance comparison.
 }}
 
-\item{...}{other arguments, see functions \code{plotEstimator()}, \code{plotGOF()}, \code{plotMCMCtrace()},
-\code{plotQALE()} or \code{plotQVI()} for available arguments.}
+\item{...}{arguments passed into specific plot function, see \code{\link[=plotEstimator]{plotEstimator()}}, \code{\link[=plotGOF]{plotGOF()}}, \code{\link[=plotMCMCtrace]{plotMCMCtrace()}},
+\code{\link[=plotQALE]{plotQALE()}} or \code{\link[=plotQVI]{plotQVI()}} for required arguments.}
 }
 \value{
-a \code{"ggplot"} object
+a \code{ggplot} object
 }
 \description{
 The function calls one of the following functions:
-\code{plotEstimator()}, \code{plotGOF()}, \code{plotMCMCtrace()},
-\code{plotQALE()}, \code{plotQVI()}
+\code{\link[=plotEstimator]{plotEstimator()}}, \code{\link[=plotGOF]{plotGOF()}}, \code{\link[=plotMCMCtrace]{plotMCMCtrace()}},
+\code{\link[=plotQALE]{plotQALE()}}, \code{\link[=plotQVI]{plotQVI()}}
 }

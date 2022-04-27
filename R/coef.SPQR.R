@@ -1,6 +1,6 @@
-#' @title coef method for class `SPQR`
+#' @title coef method for class \code{SPQR}
 #' @description
-#' Computes the estimated spline coefficients of a `SPQR` class object
+#' Computes the estimated spline coefficients of a \code{SPQR} class object
 #' @name coef.SPQR
 #'
 #' @method coef SPQR

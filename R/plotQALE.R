@@ -1,8 +1,10 @@
 #' @title plot accumulated local effects (ALE)
 #' @description
-#' Computes and plots the quantile ALEs of a `SPQR` class object. The function plots the ALE main effects across
+#' Computes and plots the quantile ALEs of a \code{SPQR} class object. The function plots the ALE main effects across
 #' \code{tau} for a single covariate using line plots, and the ALE interaction effects between two covariates
 #' across \code{tau} using contour plots.
+#'
+#' @name plotQALE
 #'
 #' @import ggplot2
 #'

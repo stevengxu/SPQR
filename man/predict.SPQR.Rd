@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.SPQR.R
 \name{predict.SPQR}
 \alias{predict.SPQR}
-\title{predict method for class \code{"SPQR"}}
+\title{predict method for class \code{SPQR}}
 \usage{
 \method{predict}{SPQR}(
   object,
@@ -17,7 +17,7 @@
 )
 }
 \arguments{
-\item{object}{An object of class \code{"SPQR"}.}
+\item{object}{An object of class \code{SPQR}.}
 
 \item{X}{The covariate vector/matrix for which the predictions are computed.}
 

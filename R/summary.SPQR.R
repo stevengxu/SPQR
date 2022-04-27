@@ -1,13 +1,13 @@
-#' @title summary method for SPQR
+#' @title summary method for class \code{SPQR}
 #' @description summarizes the output produced by \code{SPQR()} and structures them in a more organized way to be examined by the user.
 #'
 #' @method summary SPQR
 #' @name summary.SPQR
 #'
-#' @param object An object of class \code{"SPQR"}.
+#' @param object An object of class \code{SPQR}.
 #' @param ... Other arguments.
 #'
-#' @return An object of class \code{"summary.SPQR"}.
+#' @return An object of class \code{summary.SPQR}.
 #'
 #' @examples
 #' set.seed(919)

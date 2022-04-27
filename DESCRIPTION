@@ -2,13 +2,15 @@ Package: SPQR
 Type: Package
 Title: Semi-Parametric Quantile Regression
 Version: 0.1.0
-Date: 2022-4-16
+Date: 2022-4-26
 Archs: x64
 Authors@R: c(person("Steven", "Xu", email = "sgxu@ncsu.edu", role = c("aut","cre")), 
              person("Reetam", "Majumder", email = "rmajumd3@ncsu.edu", role = c("aut")),
              person("Brian", "Reich", email = "bjreich@ncsu.edu", role = c("ctb")))
-Description: Semi-Parametric Quantile Regression fitted using frequentist and Bayesian method.  
+Description: Semi-Parametric Quantile Regression fitted using MLE, MAP and MCMC method.  
     The semi-parametric quantile regression model is described in Xu and Reich (2021) <doi:10.1111/biom.13576>.
+    The package also includes functions for visualizing quantile covariate effect and variable importance using
+    accumulative local effects (ALE).
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
