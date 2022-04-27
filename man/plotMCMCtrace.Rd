@@ -44,7 +44,7 @@ control <- list(iter = 200, warmup = 150, thin = 1)
 fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
             normalize = TRUE, verbose = FALSE)
 
-## traceplot for log-likelihood
+## trace plot for log-likelihood
 plotMCMCtrace(fit, target = "loglik")
 
 
