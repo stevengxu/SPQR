@@ -31,6 +31,7 @@ The function calls one of the following functions:
 \code{\link[=plotQALE]{plotQALE()}}, \code{\link[=plotQVI]{plotQVI()}}
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -41,5 +42,5 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 
 ## Goodness-of-fit test
 autoplot(fit, output = "GOF")
-
+}
 }

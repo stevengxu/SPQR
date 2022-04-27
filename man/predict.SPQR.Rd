@@ -45,6 +45,7 @@ A named array containing all predicted values.
 Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -56,5 +57,5 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 ## compute the estimated PDF of Y conditioned on X = 0
 pdf <- predict(fit, type = "PDF", X = 0, Y = seq(0, 1, 0.01))
 plot(seq(0, 1, 0.01), pdf, xlab = "Y", ylab = "Density")
-
+}
 }

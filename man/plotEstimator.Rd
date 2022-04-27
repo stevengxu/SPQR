@@ -30,6 +30,7 @@ A \code{ggplot} object.
 Computes and plots the estimated PDF/CDF/QF curves.
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -41,5 +42,5 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 
 ## plot estimated PDF
 plotEstimator(fit, type = "PDF", X = 0)
-
+}
 }

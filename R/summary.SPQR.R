@@ -10,6 +10,7 @@
 #' @return An object of class \code{summary.SPQR}.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -20,7 +21,7 @@
 #'
 #' ## summarize output
 #' summary(fit)
-#'
+#' }
 #' @export
 summary.SPQR <- function(object, ...) {
 

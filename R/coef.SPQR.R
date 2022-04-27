@@ -12,6 +12,7 @@
 #' @return A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -20,7 +21,7 @@
 #' fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 #'             normalize = TRUE, verbose = FALSE)
 #' coef(fit, X = 0)
-#'
+#' }
 #' @export
 coef.SPQR <- function(object, X, ...) {
 

@@ -22,6 +22,7 @@ Summarizes and print the output produced by SPQR() in an organized way.
 This is equivalent to the function call \code{print.summary.SPQR(summary.SPQR(object), ...)}.
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -30,5 +31,5 @@ control <- list(iter = 200, warmup = 150, thin = 1)
 fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
             normalize = TRUE, verbose = FALSE)
 print(fit, showModel = TRUE)
-
+}
 }

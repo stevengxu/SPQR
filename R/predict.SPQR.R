@@ -21,6 +21,7 @@
 #' @return A named array containing all predicted values.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -32,7 +33,7 @@
 #' ## compute the estimated PDF of Y conditioned on X = 0
 #' pdf <- predict(fit, type = "PDF", X = 0, Y = seq(0, 1, 0.01))
 #' plot(seq(0, 1, 0.01), pdf, xlab = "Y", ylab = "Density")
-#'
+#' }
 #' @export
 
 predict.SPQR <- function(object, X, Y = NULL, nY = 101, type = c("QF","PDF","CDF"),

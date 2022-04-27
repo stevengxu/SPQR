@@ -27,6 +27,7 @@ ggplot2::autoplot
 #' @return a \code{ggplot} object
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -37,7 +38,7 @@ ggplot2::autoplot
 #'
 #' ## Goodness-of-fit test
 #' autoplot(fit, output = "GOF")
-#'
+#' }
 #' @export
 autoplot.SPQR <- function(object, output=c("GOF","estimator","trace","QALE","QVI"), ...) {
   output <- match.arg(output)

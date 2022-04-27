@@ -4,6 +4,8 @@
 # SPQR: Semi-Parametric Quantile Regression
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/stevengxu/SPQR/workflows/R-CMD-check/badge.svg)](https://github.com/stevengxu/SPQR/actions)
 <!-- badges: end -->
 
 The `SPQR` R package implements the semi-parametric quantile regression

@@ -9,6 +9,7 @@
 #' @param ... Other arguments.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -19,7 +20,7 @@
 #'
 #' ## summarize output
 #' summary(fit)
-#'
+#' }
 #' @export
 print.summary.SPQR <- function(x, showModel = FALSE, ...) {
 

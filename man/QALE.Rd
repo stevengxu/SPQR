@@ -57,6 +57,7 @@ Computes the quantile ALEs of a \code{SPQR} class object. The function plots the
 using contour plots for two covariates .
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- runif(n,0,2)
@@ -67,5 +68,5 @@ fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=3, method="MCMC",
 
 ## compute quantile ALE main effect of X at tau = 0.2,0.5,0.8
 ale <- QALE(fit, var.index=1, tau=c(0.2,0.5,0.8))
-
+}
 }

@@ -19,6 +19,7 @@ Performs a goodness-of-fit test for the estimated conditional probability densit
 probability inverse transformation method.
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -29,5 +30,5 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 
 ## Goodness-of-fit test
 plotGOF(fit)
-
+}
 }

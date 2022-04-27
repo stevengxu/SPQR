@@ -68,6 +68,7 @@
 #' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \href{doi.org/10.1111/biom.13576}{doi:10.1111/biom.13576}
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -81,7 +82,7 @@
 #'
 #' ## plot estimated PDF
 #' plotEstimator(fit, type = "PDF", X = 0)
-#'
+#' }
 #' @export
 SPQR <-
   function(X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),

@@ -37,6 +37,7 @@
 #' @importFrom stats quantile
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- runif(n,0,2)
@@ -47,7 +48,7 @@
 #'
 #' ## compute quantile ALE main effect of X at tau = 0.2,0.5,0.8
 #' ale <- QALE(fit, var.index=1, tau=c(0.2,0.5,0.8))
-#'
+#' }
 #' @export
 QALE <- function(object, var.index, tau = seq(0.1,0.9,0.1), n.bins = 40, ci.level = 0,
                  getAll = FALSE, pred.fun = NULL) {

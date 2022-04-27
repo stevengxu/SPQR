@@ -17,6 +17,7 @@
 Print the output produced by summary.SPQR().
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
@@ -27,5 +28,5 @@ fit <- SPQR(X = X, Y = Y, method = "MCMC", control = control,
 
 ## summarize output
 summary(fit)
-
+}
 }

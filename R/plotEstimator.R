@@ -13,6 +13,7 @@
 #' @import ggplot2
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -24,7 +25,7 @@
 #'
 #' ## plot estimated PDF
 #' plotEstimator(fit, type = "PDF", X = 0)
-#'
+#' }
 #' @export
 plotEstimator <- function(object, X, ...) {
 

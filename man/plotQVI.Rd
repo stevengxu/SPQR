@@ -39,6 +39,7 @@ covariate specified in var.index, and produces a ranking plot of the covariates 
 bar plot for each quantile of interest.
 }
 \examples{
+\dontrun{
 set.seed(919)
 n <- 200
 X <- matrix(runif(n*2, 0, 2), nrow = n, ncol = 2)
@@ -49,6 +50,6 @@ fit <- SPQR(X=X, Y=Y, n.knots=12, n.hidden=5, method="MCMC",
 
 ## compute quantile VI of at tau = 0.2,0.5,0.8
 plotQVI(fit, tau=c(0.2,0.5,0.8))
-
+}
 
 }

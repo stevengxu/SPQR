@@ -14,6 +14,7 @@
 #' @return A \code{ggplot} object.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- runif(n,0,2)
@@ -24,7 +25,7 @@
 #'
 #' ## compute quantile ALE main effect of X at tau = 0.2,0.5,0.8
 #' plotQALE(fit, var.index=1, tau=c(0.2,0.5,0.8))
-#'
+#' }
 #' @export
 plotQALE <- function(object, ...) {
 

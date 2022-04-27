@@ -12,6 +12,7 @@
 #' @import ggplot2
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)
@@ -22,7 +23,7 @@
 #'
 #' ## Goodness-of-fit test
 #' plotGOF(fit)
-#'
+#' }
 #' @export
 plotGOF <- function(object, getAll = FALSE) {
 

@@ -18,6 +18,7 @@
 #' @import ggplot2
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(919)
 #' n <- 200
 #' X <- matrix(runif(n*2, 0, 2), nrow = n, ncol = 2)
@@ -28,7 +29,7 @@
 #'
 #' ## compute quantile VI of at tau = 0.2,0.5,0.8
 #' plotQVI(fit, tau=c(0.2,0.5,0.8))
-#'
+#' }
 #'
 #' @export
 plotQVI <- function(object, var.index = NULL, var.names = NULL, ...) {
