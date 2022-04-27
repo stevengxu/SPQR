@@ -26,3 +26,5 @@ Maintainer: Steven Xu <sgxu@ncsu.edu>
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+URL: https://github.com/stevengxu/SPQR
+BugReports: https://github.com/stevengxu/SPQR/issues
