@@ -1,7 +1,6 @@
 #' @title cross-validation for SPQR estimator
 #' @description
-#' Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error
-#' based on pre-computed folds.
+#' Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error.
 #' @name cv.SPQR
 #'
 #' @param folds A list of CV folds, possibly that generated from \code{\link[=createFolds.SPQR]{createFolds.SPQR()}}.
@@ -23,8 +22,8 @@
 #' Y <- rnorm(n, X, 0.8)
 #' folds <- createFolds.SPQR(Y, nfold = 5)
 #' ## compute 5-fold CV error
-#' cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-#'                   normalize = TRUE, verbose = FALSE)
+#' # cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
+#' #                   normalize = TRUE, verbose = FALSE)
 #' }
 #' @export
 cv.SPQR <- function(folds, X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
