@@ -92,8 +92,7 @@ the Stan reference manual.
 \item{folds}{the CV folds.}
 }
 \description{
-Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error
-based on pre-computed folds.
+Fits SPQR using either MLE or MAP method and computes K-fold cross-validation error.
 }
 \examples{
 \donttest{
@@ -103,8 +102,8 @@ X <- rbinom(n, 1, 0.5)
 Y <- rnorm(n, X, 0.8)
 folds <- createFolds.SPQR(Y, nfold = 5)
 ## compute 5-fold CV error
-cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-                  normalize = TRUE, verbose = FALSE)
+# cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
+#                   normalize = TRUE, verbose = FALSE)
 }
 }
 \seealso{
