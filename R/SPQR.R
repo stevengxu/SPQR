@@ -64,6 +64,8 @@
 #' @importFrom torch `%>%` torch_tensor
 #' @importFrom stats rgamma
 #' @importFrom progressr handlers progressor
+#' @importFrom Rcpp sourceCpp
+#' @import progress
 #'
 #' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \doi{10.1111/biom.13576}
 #'
