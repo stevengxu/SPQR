@@ -58,8 +58,8 @@
 #' @param seed Random number generation seed.
 #' @param ... other parameters to pass to \code{control}.
 #'
-#' @return An object of class \code{SPQR}.
-#'
+#' @return An object of class \code{SPQR}. A list containing mostly internal model fitting
+#' information to be used by helper functions.
 #'
 #' @importFrom torch `%>%` torch_tensor
 #' @importFrom stats rgamma
@@ -68,7 +68,7 @@
 #' @references Xu SG, Reich BJ (2021). \emph{Bayesian Nonparametric Quantile Process Regression and Estimation of Marginal Quantile Effects.} Biometrics. \doi{10.1111/biom.13576}
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

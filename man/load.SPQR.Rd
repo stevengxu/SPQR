@@ -22,14 +22,14 @@ loads the \code{.pt} file storing the \code{torch} model with the same \code{nam
 and attach it to the \code{SPQR} object.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
 Y <- rnorm(n, X, 0.8)
-fit <- SPQR(X = X, Y = Y, method = "MLE", normalize = TRUE, verbose = FALSE)
-save.SPQR(fit, name = "SPQR_MLE")
-fit <- load.SPQR("SPQR_MLE")
+fit <- SPQR(X = X, Y = Y, method = "MCMC", normalize = TRUE, verbose = FALSE)
+# save.SPQR(fit, name = "mcmc_fit")
+# fit <- load.SPQR("mcmc_fit")
 }
 
 }

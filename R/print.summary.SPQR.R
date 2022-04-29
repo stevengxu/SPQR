@@ -8,8 +8,10 @@
 #' @param showModel If \code{TRUE}, prints the detailed NN architecture by layer.
 #' @param ... Other arguments.
 #'
+#' @return No return value, called for side effects.
+#'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

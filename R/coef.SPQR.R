@@ -12,7 +12,7 @@
 #' @return A \code{NROW(X)} by K matrix containing values of the estimated coefficient, where K is the number of basis functions.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

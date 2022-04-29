@@ -19,7 +19,7 @@ Performs a goodness-of-fit test for the estimated conditional probability densit
 probability inverse transformation method.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

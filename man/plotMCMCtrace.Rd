@@ -36,7 +36,7 @@ A \code{ggplot} object.
 Show trace plot of the log-likelihood or estimates, of a \code{"SPQR"} class object fitted using the MCMC method
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

@@ -21,7 +21,7 @@
 #' @return A named array containing all predicted values.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

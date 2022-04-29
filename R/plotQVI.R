@@ -18,7 +18,7 @@
 #' @import ggplot2
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- matrix(runif(n*2, 0, 2), nrow = n, ncol = 2)

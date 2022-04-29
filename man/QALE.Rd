@@ -57,7 +57,7 @@ Computes the quantile ALEs of a \code{SPQR} class object. The function plots the
 using contour plots for two covariates .
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- runif(n,0,2)

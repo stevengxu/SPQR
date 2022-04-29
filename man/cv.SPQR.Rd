@@ -22,7 +22,7 @@ cv.SPQR(
 )
 }
 \arguments{
-\item{folds}{A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.}
+\item{folds}{A list of CV folds, possibly that generated from \code{\link[=createFolds.SPQR]{createFolds.SPQR()}}.}
 
 \item{X}{The covariate matrix (without intercept column)}
 
@@ -96,22 +96,17 @@ Fits SPQR using either MLE or MAP method and computes K-fold cross-validation er
 based on pre-computed folds.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
-n <- 1000
+n <- 200
 X <- rbinom(n, 1, 0.5)
 Y <- rnorm(n, X, 0.8)
 folds <- createFolds.SPQR(Y, nfold = 5)
-
-## hyperparameter tuning using 5 fold cross-validation
-control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
-lr.grid <- exp(-5:-3)
-cve <- sapply(lr.grid, FUN=function(lr) {
-control$lr <- lr
+## compute 5-fold CV error
 cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-                  control=control, verbose = FALSE)
-c(lr, cv.out$cve)
-})
+                  normalize = TRUE, verbose = FALSE)
 }
-
+}
+\seealso{
+\code{\link[=createFolds.SPQR]{createFolds.SPQR()}}
 }

@@ -15,6 +15,9 @@
     \item{\code{showModel}}{If \code{TRUE}, prints the detailed NN architecture by layer.}
   }}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Summarizes and print the output produced by SPQR() in an organized way.
 }
@@ -22,7 +25,7 @@ Summarizes and print the output produced by SPQR() in an organized way.
 This is equivalent to the function call \code{print.summary.SPQR(summary.SPQR(object), ...)}.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

@@ -31,7 +31,7 @@ The function calls one of the following functions:
 \code{\link[=plotQALE]{plotQALE()}}, \code{\link[=plotQVI]{plotQVI()}}
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

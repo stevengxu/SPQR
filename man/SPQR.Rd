@@ -85,14 +85,15 @@ the Stan reference manual.
 \item{...}{other parameters to pass to \code{control}.}
 }
 \value{
-An object of class \code{SPQR}.
+An object of class \code{SPQR}. A list containing mostly internal model fitting
+information to be used by helper functions.
 }
 \description{
 Main function of the package. Fits SPQR using the maximum likelihood estimation (MLE), maximum \emph{a posterior} (MAP) or
 Markov chain Monte Carlo (MCMC) method. Returns an object of S3 class \code{SPQR}.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

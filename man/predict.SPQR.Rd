@@ -45,7 +45,7 @@ A named array containing all predicted values.
 Computes the predicted values for different functions based on the fitted \code{"SPQR"} object.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

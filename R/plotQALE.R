@@ -14,7 +14,7 @@
 #' @return A \code{ggplot} object.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- runif(n,0,2)

@@ -13,11 +13,14 @@
 
 \item{...}{Other arguments.}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Print the output produced by summary.SPQR().
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

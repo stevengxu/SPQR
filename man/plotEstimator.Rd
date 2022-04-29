@@ -30,7 +30,7 @@ A \code{ggplot} object.
 Computes and plots the estimated PDF/CDF/QF curves.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)

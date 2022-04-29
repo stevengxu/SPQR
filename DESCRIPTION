@@ -7,15 +7,12 @@ Archs: x64
 Authors@R: c(person("Steven", "Xu", email = "sgxu@ncsu.edu", role = c("aut","cre")), 
              person("Reetam", "Majumder", email = "rmajumd3@ncsu.edu", role = c("aut")),
              person("Brian", "Reich", email = "bjreich@ncsu.edu", role = c("ctb")))
-Description: Semi-Parametric Quantile Regression fitted using MLE, MAP and MCMC method.  
-    The semi-parametric quantile regression model is described in Xu and Reich (2021) <doi:10.1111/biom.13576>.
-    The package also includes functions for visualizing quantile covariate effect and variable importance using
-    accumulative local effects (ALE).
+Description: Methods for flexible estimation of conditional density and quantile function, as well as model agnostic tools for analyzing quantile covariate effect and variable importance. The estimation method implements the semi-parametric quantile regression model described in Xu and Reich (2021) <doi:10.1111/biom.13576>, and the model agnostic tools extend accumulative local effects (ALE) to quantile regression setting.
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.1.2
 Depends: R (>= 3.6)
-Imports: Rcpp (>= 1.0.8), stats, utils, torch, splines2, ggplot2, loo, progress, progressr, interp, RColorBrewer, yaImpute, coro (>= 1.0.2)
+Imports: Rcpp (>= 1.0.8), stats, torch, splines2, ggplot2, loo, progress, progressr, interp, RColorBrewer, yaImpute, coro (>= 1.0.2)
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
 SystemRequirements: C++11

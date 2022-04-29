@@ -1,7 +1,7 @@
 #' @title generate cross-validation folds
 #' @description
 #' Helper function to generate cross-validation folds that can be used by \code{cv.SPQR}.
-#'
+#' @name createFolds.SPQR
 #' @param Y The response vector.
 #' @param nfold The number of cross-validation folds.
 #' @param stratified If \code{TRUE}, stratified folds based on quantiles of \code{Y} are generated.
@@ -14,18 +14,6 @@
 #' X <- rbinom(n, 1, 0.5)
 #' Y <- rnorm(n, X, 0.8)
 #' folds <- createFolds.SPQR(Y, nfold = 5)
-#'
-#' \dontrun{
-#' ## hyperparameter tuning using 5 fold cross-validation
-#' control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
-#' lr.grid <- exp(-5:-3)
-#' cve <- sapply(lr.grid, FUN=function(lr) {
-#' control$lr <- lr
-#' cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-#'                   control=control, verbose = FALSE)
-#' c(lr, cv.out$cve)
-#' })
-#' }
 #'
 #' @export
 createFolds.SPQR <- function(Y, nfold, stratified=FALSE) {

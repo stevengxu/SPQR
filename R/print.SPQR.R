@@ -8,8 +8,10 @@
 #' @param x An object of class \code{SPQR}
 #' @inheritDotParams print.summary.SPQR -x
 #'
+#' @return No return value, called for side effects.
+#'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

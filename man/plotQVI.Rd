@@ -39,7 +39,7 @@ covariate specified in var.index, and produces a ranking plot of the covariates 
 bar plot for each quantile of interest.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- matrix(runif(n*2, 0, 2), nrow = n, ncol = 2)

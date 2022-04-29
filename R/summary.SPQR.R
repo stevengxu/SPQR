@@ -7,10 +7,19 @@
 #' @param object An object of class \code{SPQR}.
 #' @param ... Other arguments.
 #'
-#' @return An object of class \code{summary.SPQR}.
+#' @return An object of class \code{summary.SPQR}. A list containing summary information
+#' of the fitted model.
+#' \item{method}{The estimation method}
+#' \item{time}{The elapsed time}
+#' \item{prior}{If \code{method = "MAP"} or \code{method = "MCMC"}, the hyperprior model for the variance hyperparameters}
+#' \item{model}{If \code{method = "MLE"} or \code{method = "MAP"}, the fitted \code{torch} model. If \code{method = "MCMC"}, the posterior samples of neural network parameters}
+#' \item{loss}{If \code{method = "MLE"} or \code{method = "MAP"}, the train and validation loss}
+#' \item{optim.info}{If \code{method = "MLE"} or \code{method = "MAP"}, configuration information of the Adam routine}
+#' \item{elpd}{If \code{method = "MCMC"}, the expected log-predictive density}
+#' \item{diagnostics}{If \code{method = "MCMC"}, diagnostic information of the MCMC chain}
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
 #' n <- 200
 #' X <- rbinom(n, 1, 0.5)

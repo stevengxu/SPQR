@@ -13,19 +13,22 @@ save.SPQR(object, name = stop("`name` must be specified"), path = NULL)
 
 \item{path}{The path to save the object. Default is the current working directory.}
 }
+\value{
+No return value, called for side effects.
+}
 \description{
 Save \code{SPQR} object in a designated directory. If SPQR is fitted with
 \code{method = "MCMC"} then only a \code{.SPQR} file is saved; otherwise, a \code{.pt}
 file storing the fitted \code{torch} model is also saved.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(919)
 n <- 200
 X <- rbinom(n, 1, 0.5)
 Y <- rnorm(n, X, 0.8)
-fit <- SPQR(X = X, Y = Y, method = "MLE", normalize = TRUE, verbose = FALSE)
-save.SPQR(fit, name = "SPQR_MLE")
+fit <- SPQR(X = X, Y = Y, method = "MCMC", normalize = TRUE, verbose = FALSE)
+# save.SPQR(fit, name = "mcmc_fit")
 }
 
 }

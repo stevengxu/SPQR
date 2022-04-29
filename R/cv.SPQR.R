@@ -4,7 +4,7 @@
 #' based on pre-computed folds.
 #' @name cv.SPQR
 #'
-#' @param folds A list of CV folds, possibly that generated from \code{createFolds.SPQR()}.
+#' @param folds A list of CV folds, possibly that generated from \code{\link[=createFolds.SPQR]{createFolds.SPQR()}}.
 #' @inheritParams SPQR
 #'
 #' @return
@@ -12,27 +12,20 @@
 #' \item{cve}{the cross-validation error.}
 #' \item{folds}{the CV folds.}
 #'
+#' @seealso \code{\link[=createFolds.SPQR]{createFolds.SPQR()}}
 #' @importFrom torch `%>%` torch_tensor
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(919)
-#' n <- 1000
+#' n <- 200
 #' X <- rbinom(n, 1, 0.5)
 #' Y <- rnorm(n, X, 0.8)
 #' folds <- createFolds.SPQR(Y, nfold = 5)
-#'
-#' ## hyperparameter tuning using 5 fold cross-validation
-#' control <- list(batch.size = 256, epochs = 500, use.GPU=TRUE)
-#' lr.grid <- exp(-5:-3)
-#' cve <- sapply(lr.grid, FUN=function(lr) {
-#' control$lr <- lr
+#' ## compute 5-fold CV error
 #' cv.out <- cv.SPQR(folds=folds, X=X, Y=Y, method="MLE",
-#'                   control=control, verbose = FALSE)
-#' c(lr, cv.out$cve)
-#' })
+#'                   normalize = TRUE, verbose = FALSE)
 #' }
-#'
 #' @export
 cv.SPQR <- function(folds, X, Y, n.knots = 10, n.hidden = 10, activation = c("tanh","relu","sigmoid"),
                     method=c("MLE","MAP","MCMC"), prior=c("ARD","GP","GSM"), hyperpar=list(),
